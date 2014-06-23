@@ -118,7 +118,7 @@ def init(ctx, filters = None):
     except:
         pass
 
-def configure(conf):
+def configure(conf, bsp_configure = None):
     #
     # Handle the show commands option.
     #
@@ -201,6 +201,13 @@ def configure(conf):
         # Show commands support the user can supply.
         #
         conf.env.SHOW_COMMANDS = show_commands
+
+        #
+        # If there is a handler call it. This lets the user make configuration
+        # checks with in the BSP's context.
+        #
+        if bsp_configure is not None:
+            bsp_configure(conf, ab)
 
         conf.setenv('', env)
 
