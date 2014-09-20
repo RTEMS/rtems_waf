@@ -723,7 +723,8 @@ from waflib import Node
 from waflib.Tools.ccroot import link_task, USELIB_VARS
 
 USELIB_VARS['rap'] = set(['RTEMS_LINKFLAGS'])
-USELIB_VARS['rtrace'] = set(['RTEMS_TRACE_CFG'])
+USELIB_VARS['rtrace'] = set(['RTRACE_FLAGS', 'RTRACE_CFG', 'RTRACE_WRAPPER', 'RTRACE_LINKCMDS'])
+
 @TaskGen.extension('.c')
 
 class rap(link_task):
@@ -735,7 +736,8 @@ class rap(link_task):
 
 class rtrace(link_task):
     "Link object files into a RTEMS trace application"
-    run_str = '${RTEMS_TLD} -vvvv -W hello-test -c ${CC} -l ${CC} -C ${RTEMS_TRACE_CFG} -r ${RTEMS_PATH} -B ${ARCH_BSP} -- ${SRC} ${LINKFLAGS} -v -Wl,-Map=chris.map -Wl,--cref -o ${TGT[0].abspath()} ${STLIB_MARKER} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB}'
+    run_str = '${RTEMS_TLD} ${RTACE_FLAGS} -W ${RTRACE_WRAPPER} -C ${RTRACE_CFG} -r ${RTEMS_PATH} -B ${ARCH_BSP} -c ${CC} -l ${CC} -- ${SRC} ${LINKFLAGS} ${RTRACE_LINKFLAGS} -o ${TGT[0].abspath()} ${STLIB_MARKER} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB}'
     ext_out = ['.texe']
-    vars    = ['RTEMS_TRACE_CFG', 'LINKDEPS']
+    vars    = ['RTRACE_FLAGS', 'RTRACE_CFG', 'RTRACE_WRAPER', 'RTRACE_LINKFLAGS', 'LINKDEPS']
     inst_to = '${BINDIR}'
+    color = 'PINK'
