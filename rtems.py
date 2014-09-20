@@ -150,13 +150,16 @@ def configure(conf, bsp_configure = None):
         conf.msg('Board Support Package', ab, 'YELLOW')
 
         arch = _arch_from_arch_bsp(ab)
+        bsp  = _bsp_from_arch_bsp(ab)
+
+        conf.env.ARCH_BSP = '%s/%s' % (arch.split('-')[0], bsp)
 
         conf.env.RTEMS_PATH = conf.options.rtems_path
         conf.env.RTEMS_VERSION = conf.options.rtems_version
         conf.env.RTEMS_ARCH_BSP = ab
         conf.env.RTEMS_ARCH = arch.split('-')[0]
         conf.env.RTEMS_ARCH_RTEMS = arch
-        conf.env.RTEMS_BSP = _bsp_from_arch_bsp(ab)
+        conf.env.RTEMS_BSP = bsp
 
         tools = _find_tools(conf, arch, [rtems_path] + rtems_tools, tools)
         for t in tools[arch]:
@@ -198,16 +201,16 @@ def configure(conf, bsp_configure = None):
         tweaks(conf, ab)
 
         #
+        # If the user has supplied a BSP specific configure function
+        # call it.
+        #
+        if bsp_configure:
+            bsp_configure(conf, ab)
+
+        #
         # Show commands support the user can supply.
         #
         conf.env.SHOW_COMMANDS = show_commands
-
-        #
-        # If there is a handler call it. This lets the user make configuration
-        # checks with in the BSP's context.
-        #
-        if bsp_configure is not None:
-            bsp_configure(conf, ab)
 
         conf.setenv('', env)
 
@@ -352,6 +355,11 @@ def check_options(ctx, rtems_tools, rtems_path, rtems_version, rtems_archs, rtem
     arch_bsps = filter(ctx, 'bsps', arch_bsps)
 
     return rtems_bin, tools, archs, arch_bsps
+
+def check_env(ctx, var):
+    if var in ctx.env and len(ctx.env[var]) != 0:
+        return True
+    return False
 
 def check(ctx, option):
     if option in ctx.env:
@@ -521,6 +529,8 @@ def _find_tools(conf, arch, paths, tools):
         arch_tools['READELF']     = conf.find_program([arch + '-readelf'], path_list = paths)
         arch_tools['STRIP']       = conf.find_program([arch + '-strip'], path_list = paths)
         arch_tools['RTEMS_LD']    = conf.find_program(['rtems-ld'], path_list = paths,
+                                                      mandatory = False)
+        arch_tools['RTEMS_TLD']   = conf.find_program(['rtems-tld'], path_list = paths,
                                                       mandatory = False)
         arch_tools['RTEMS_BIN2C'] = conf.find_program(['rtems-bin2c'], path_list = paths,
                                                       mandatory = False)
@@ -711,11 +721,21 @@ from waflib import TaskGen
 from waflib import Utils
 from waflib import Node
 from waflib.Tools.ccroot import link_task, USELIB_VARS
+
 USELIB_VARS['rap'] = set(['RTEMS_LINKFLAGS'])
+USELIB_VARS['rtrace'] = set(['RTEMS_TRACE_CFG'])
 @TaskGen.extension('.c')
+
 class rap(link_task):
     "Link object files into a RTEMS application"
     run_str = '${RTEMS_LD} ${RTEMS_LINKFLAGS} --cc ${CC} ${SRC} -o ${TGT[0].abspath()} ${STLIB_MARKER} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB}'
     ext_out = ['.rap']
     vars    = ['RTEMS_LINKFLAGS', 'LINKDEPS']
+    inst_to = '${BINDIR}'
+
+class rtrace(link_task):
+    "Link object files into a RTEMS trace application"
+    run_str = '${RTEMS_TLD} -vvvv -W hello-test -c ${CC} -l ${CC} -C ${RTEMS_TRACE_CFG} -r ${RTEMS_PATH} -B ${ARCH_BSP} -- ${SRC} ${LINKFLAGS} -v -Wl,-Map=chris.map -Wl,--cref -o ${TGT[0].abspath()} ${STLIB_MARKER} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB}'
+    ext_out = ['.texe']
+    vars    = ['RTEMS_TRACE_CFG', 'LINKDEPS']
     inst_to = '${BINDIR}'
