@@ -186,6 +186,8 @@ def configure(conf, bsp_configure = None):
         conf.env.LINKFLAGS = cflags['cflags'] + ldflags['ldflags']
         conf.env.LIB       = flags['LIB']
 
+        conf.env.RTRACE_WRAPPER_ST = '-W %s'
+
         #
         # Checks for various RTEMS features.
         #
@@ -736,7 +738,7 @@ class rap(link_task):
 
 class rtrace(link_task):
     "Link object files into a RTEMS trace application"
-    run_str = '${RTEMS_TLD} ${RTACE_FLAGS} -W ${RTRACE_WRAPPER} -C ${RTRACE_CFG} -r ${RTEMS_PATH} -B ${ARCH_BSP} -c ${CC} -l ${CC} -- ${SRC} ${LINKFLAGS} ${RTRACE_LINKFLAGS} -o ${TGT[0].abspath()} ${STLIB_MARKER} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB}'
+    run_str = '${RTEMS_TLD} ${RTACE_FLAGS} ${RTRACE_WRAPPER_ST:RTRACE_WRAPPER} -C ${RTRACE_CFG} -r ${RTEMS_PATH} -B ${ARCH_BSP} -c ${CC} -l ${CC} -- ${SRC} ${LINKFLAGS} ${RTRACE_LINKFLAGS} -o ${TGT[0].abspath()} ${STLIB_MARKER} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB}'
     ext_out = ['.texe']
     vars    = ['RTRACE_FLAGS', 'RTRACE_CFG', 'RTRACE_WRAPER', 'RTRACE_LINKFLAGS', 'LINKDEPS']
     inst_to = '${BINDIR}'
