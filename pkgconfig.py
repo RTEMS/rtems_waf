@@ -74,7 +74,7 @@ class package:
         while expanded:
             expanded = False
             if tm:
-                print 'pc:get: "' + s + '"'
+                print('pc:get: "' + s + '"')
             ms = mre.findall(s)
             for m in ms:
                 mn = m[2:-1]
