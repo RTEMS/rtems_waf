@@ -29,7 +29,7 @@
 import copy
 import os
 import os.path
-import pkgconfig
+from . import pkgconfig
 import re
 import subprocess
 
