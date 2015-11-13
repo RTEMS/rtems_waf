@@ -235,8 +235,7 @@ def load_cpuopts(conf, arch_bsp, rtems_path):
                'RTEMS_NEWLIB',
                'RTEMS_POSIX_API',
                'RTEMS_SMP',
-               'RTEMS_NETWORKING',
-               'RTEMS_ATOMIC']
+               'RTEMS_NETWORKING']
     for opt in options:
         enabled = check_opt(conf, opt, 'rtems/score/cpuopts.h', arch_bsp, rtems_path)
         if enabled:
@@ -399,9 +398,6 @@ def check_smp(ctx):
 
 def check_networking(ctx):
     return check(ctx, 'RTEMS_NETWORKING')
-
-def check_atomic(ctx):
-    return check(ctx, 'RTEMS_ATOMIC')
 
 def arch(arch_bsp):
     """ Given an arch/bsp return the architecture."""
