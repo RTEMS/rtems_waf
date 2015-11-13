@@ -191,11 +191,15 @@ def configure(conf, bsp_configure = None):
         #
         # Checks for various RTEMS features.
         #
-        conf.multicheck({ 'header_name': 'rtems.h'},
-                        { 'header_name': 'rtems/score/cpuopts.h'},
-                        msg = 'Checking for RTEMS headers',
+        conf.multicheck({ 'header_name': 'rtems/score/cpuopts.h'},
+                        msg = 'Checking for RTEMS CPU options header',
                         mandatory = True)
         load_cpuopts(conf, ab, conf.options.rtems_path)
+        if conf.env['RTEMS_SMP'] == 'Yes':
+            conf.env.CXXFLAGS += ['-std=gnu++11']
+        conf.multicheck({ 'header_name': 'rtems.h'},
+                        msg = 'Checking for RTEMS header',
+                        mandatory = True)
 
         #
         # Add tweaks.
