@@ -39,15 +39,15 @@ def options(opt):
     opt.add_option('--rtems',
                    default = None,
                    dest = 'rtems_path',
-                   help = 'Path to an installed RTEMS (default /opt/rtems-${rtems_version}).')
+                   help = 'Path to an installed RTEMS (defaults to prefix).')
     opt.add_option('--rtems-tools',
                    default = None,
                    dest = 'rtems_tools',
                    help = 'Path to RTEMS tools (defaults to path to installed RTEMS).')
     opt.add_option('--rtems-version',
-                   default = '4.11',
+                   default = None,
                    dest = 'rtems_version',
-                   help = 'RTEMS version (default 4.11).')
+                   help = 'RTEMS version (default is derived from prefix).')
     opt.add_option('--rtems-archs',
                    default = 'all',
                    dest = 'rtems_archs',
@@ -83,12 +83,14 @@ def init(ctx, filters = None):
         #
         # Check the tools, architectures and bsps.
         #
-        rtems_path, rtems_bin, rtems_tools, archs, arch_bsps = check_options(ctx,
-                                                                             env.options['rtems_tools'],
-                                                                             env.options['rtems_path'],
-                                                                             env.options['rtems_version'],
-                                                                             env.options['rtems_archs'],
-                                                                             env.options['rtems_bsps'])
+        rtems_version, rtems_path, rtems_bin, rtems_tools, archs, arch_bsps = \
+            check_options(ctx,
+                          env.options['prefix'],
+                          env.options['rtems_tools'],
+                          env.options['rtems_path'],
+                          env.options['rtems_version'],
+                          env.options['rtems_archs'],
+                          env.options['rtems_bsps'])
 
         #
         # Update the contextes for all the bsps.
@@ -122,12 +124,14 @@ def configure(conf, bsp_configure = None):
     else:
         show_commands = 'no'
 
-    rtems_path, rtems_bin, rtems_tools, archs, arch_bsps = check_options(conf,
-                                                                         conf.options.rtems_tools,
-                                                                         conf.options.rtems_path,
-                                                                         conf.options.rtems_version,
-                                                                         conf.options.rtems_archs,
-                                                                         conf.options.rtems_bsps)
+    rtems_version, rtems_path, rtems_bin, rtems_tools, archs, arch_bsps = \
+        check_options(conf,
+                      conf.options.prefix,
+                      conf.options.rtems_tools,
+                      conf.options.rtems_path,
+                      conf.options.rtems_version,
+                      conf.options.rtems_archs,
+                      conf.options.rtems_bsps)
 
     if rtems_tools is None:
         conf.fatal('RTEMS tools not found.')
@@ -150,7 +154,7 @@ def configure(conf, bsp_configure = None):
         conf.env.ARCH_BSP = '%s/%s' % (arch.split('-')[0], bsp)
 
         conf.env.RTEMS_PATH = rtems_path
-        conf.env.RTEMS_VERSION = conf.options.rtems_version
+        conf.env.RTEMS_VERSION = rtems_version
         conf.env.RTEMS_ARCH_BSP = ab
         conf.env.RTEMS_ARCH = arch.split('-')[0]
         conf.env.RTEMS_ARCH_RTEMS = arch
@@ -280,12 +284,18 @@ def tweaks(conf, arch_bsp):
     if '-ffunction-sections' in conf.env.CFLAGS:
       conf.env.LINKFLAGS += ['-Wl,--gc-sections']
 
-def check_options(ctx, rtems_tools, rtems_path, rtems_version, rtems_archs, rtems_bsps):
+def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_archs, rtems_bsps):
     #
     # Set defaults
     #
+    if rtems_version is None:
+        m = re.compile('[^0-9.]*([0-9.]+)$').match(prefix)
+        if m:
+            rtems_version = m.group(1)
+        else:
+            ctx.fatal('RTEMS version cannot derived from prefix: ' + prefix)
     if rtems_path is None:
-        rtems_path = '/opt/rtems-' + rtems_version
+        rtems_path = prefix
     if rtems_tools is None:
         rtems_tools = rtems_path
 
@@ -360,7 +370,7 @@ def check_options(ctx, rtems_tools, rtems_path, rtems_version, rtems_archs, rtem
     #
     arch_bsps = filter(ctx, 'bsps', arch_bsps)
 
-    return rtems_path, rtems_bin, tools, archs, arch_bsps
+    return rtems_version, rtems_path, rtems_bin, tools, archs, arch_bsps
 
 def check_env(ctx, var):
     if var in ctx.env and len(ctx.env[var]) != 0:
