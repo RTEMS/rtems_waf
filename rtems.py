@@ -33,26 +33,21 @@ import pkgconfig
 import re
 import subprocess
 
-default_version = '4.11'
-default_label = 'rtems-' + default_version
-default_path = '/opt/' + default_label
-default_postfix = 'rtems' + default_version
-
 rtems_filters = None
 
 def options(opt):
     opt.add_option('--rtems',
-                   default = default_path,
+                   default = None,
                    dest = 'rtems_path',
-                   help = 'Path to an installed RTEMS.')
+                   help = 'Path to an installed RTEMS (default /opt/rtems-${rtems_version}).')
     opt.add_option('--rtems-tools',
                    default = None,
                    dest = 'rtems_tools',
-                   help = 'Path to RTEMS tools.')
+                   help = 'Path to RTEMS tools (defaults to path to installed RTEMS).')
     opt.add_option('--rtems-version',
-                   default = default_version,
+                   default = '4.11',
                    dest = 'rtems_version',
-                   help = 'RTEMS version (default ' + default_version + ').')
+                   help = 'RTEMS version (default 4.11).')
     opt.add_option('--rtems-archs',
                    default = 'all',
                    dest = 'rtems_archs',
@@ -88,12 +83,12 @@ def init(ctx, filters = None):
         #
         # Check the tools, architectures and bsps.
         #
-        rtems_path, rtems_tools, archs, arch_bsps = check_options(ctx,
-                                                                  env.options['rtems_tools'],
-                                                                  env.options['rtems_path'],
-                                                                  env.options['rtems_version'],
-                                                                  env.options['rtems_archs'],
-                                                                  env.options['rtems_bsps'])
+        rtems_path, rtems_bin, rtems_tools, archs, arch_bsps = check_options(ctx,
+                                                                             env.options['rtems_tools'],
+                                                                             env.options['rtems_path'],
+                                                                             env.options['rtems_version'],
+                                                                             env.options['rtems_archs'],
+                                                                             env.options['rtems_bsps'])
 
         #
         # Update the contextes for all the bsps.
@@ -127,12 +122,12 @@ def configure(conf, bsp_configure = None):
     else:
         show_commands = 'no'
 
-    rtems_path, rtems_tools, archs, arch_bsps = check_options(conf,
-                                                              conf.options.rtems_tools,
-                                                              conf.options.rtems_path,
-                                                              conf.options.rtems_version,
-                                                              conf.options.rtems_archs,
-                                                              conf.options.rtems_bsps)
+    rtems_path, rtems_bin, rtems_tools, archs, arch_bsps = check_options(conf,
+                                                                         conf.options.rtems_tools,
+                                                                         conf.options.rtems_path,
+                                                                         conf.options.rtems_version,
+                                                                         conf.options.rtems_archs,
+                                                                         conf.options.rtems_bsps)
 
     if rtems_tools is None:
         conf.fatal('RTEMS tools not found.')
@@ -154,14 +149,14 @@ def configure(conf, bsp_configure = None):
 
         conf.env.ARCH_BSP = '%s/%s' % (arch.split('-')[0], bsp)
 
-        conf.env.RTEMS_PATH = conf.options.rtems_path
+        conf.env.RTEMS_PATH = rtems_path
         conf.env.RTEMS_VERSION = conf.options.rtems_version
         conf.env.RTEMS_ARCH_BSP = ab
         conf.env.RTEMS_ARCH = arch.split('-')[0]
         conf.env.RTEMS_ARCH_RTEMS = arch
         conf.env.RTEMS_BSP = bsp
 
-        tools = _find_tools(conf, arch, [rtems_path] + rtems_tools, tools)
+        tools = _find_tools(conf, arch, [rtems_bin] + rtems_tools, tools)
         for t in tools[arch]:
             conf.env[t] = tools[arch][t]
 
@@ -169,12 +164,12 @@ def configure(conf, bsp_configure = None):
         conf.load('g++')
         conf.load('gas')
 
-        flags = _load_flags(conf, ab, conf.options.rtems_path)
+        flags = _load_flags(conf, ab, rtems_path)
 
         cflags = _filter_flags('cflags', flags['CFLAGS'],
-                               arch, conf.options.rtems_path)
+                               arch, rtems_path)
         ldflags = _filter_flags('ldflags', flags['LDFLAGS'],
-                               arch, conf.options.rtems_path)
+                               arch, rtems_path)
 
         conf.env.CFLAGS    = cflags['cflags']
         conf.env.CXXFLAGS  = conf.env.CFLAGS
@@ -194,7 +189,7 @@ def configure(conf, bsp_configure = None):
         conf.multicheck({ 'header_name': 'rtems/score/cpuopts.h'},
                         msg = 'Checking for RTEMS CPU options header',
                         mandatory = True)
-        load_cpuopts(conf, ab, conf.options.rtems_path)
+        load_cpuopts(conf, ab, rtems_path)
         if conf.env['RTEMS_SMP'] == 'Yes':
             conf.env.CXXFLAGS += ['-std=gnu++11']
         conf.multicheck({ 'header_name': 'rtems.h'},
@@ -287,6 +282,14 @@ def tweaks(conf, arch_bsp):
 
 def check_options(ctx, rtems_tools, rtems_path, rtems_version, rtems_archs, rtems_bsps):
     #
+    # Set defaults
+    #
+    if rtems_path is None:
+        rtems_path = '/opt/rtems-' + rtems_version
+    if rtems_tools is None:
+        rtems_tools = rtems_path
+
+    #
     # Check the paths are valid.
     #
     if not os.path.exists(rtems_path):
@@ -306,17 +309,14 @@ def check_options(ctx, rtems_tools, rtems_path, rtems_version, rtems_archs, rtem
     # We can more than one path to tools. This happens when testing different
     # versions.
     #
-    if rtems_tools is not None:
-        rt = rtems_tools.split(',')
-        tools = []
-        for path in rt:
-            if not os.path.exists(path):
-                ctx.fatal('RTEMS tools path not found: ' + path)
-            if not os.path.exists(os.path.join(path, 'bin')):
-                ctx.fatal('RTEMS tools path does not contain a \'bin\' directory: ' + path)
-            tools += [os.path.join(path, 'bin')]
-    else:
-        tools = None
+    rt = rtems_tools.split(',')
+    tools = []
+    for path in rt:
+        if not os.path.exists(path):
+            ctx.fatal('RTEMS tools path not found: ' + path)
+        if not os.path.exists(os.path.join(path, 'bin')):
+            ctx.fatal('RTEMS tools path does not contain a \'bin\' directory: ' + path)
+        tools += [os.path.join(path, 'bin')]
 
     #
     # Filter the tools.
@@ -360,7 +360,7 @@ def check_options(ctx, rtems_tools, rtems_path, rtems_version, rtems_archs, rtem
     #
     arch_bsps = filter(ctx, 'bsps', arch_bsps)
 
-    return rtems_bin, tools, archs, arch_bsps
+    return rtems_path, rtems_bin, tools, archs, arch_bsps
 
 def check_env(ctx, var):
     if var in ctx.env and len(ctx.env[var]) != 0:
@@ -443,21 +443,21 @@ def filter(ctx, filter, items):
         ctx.fatal('Following %s not found: %s' % (filter, ', '.join(items_in)))
     return sorted(filtered_items)
 
-def arch_rtems_version(arch):
+def arch_rtems_version(version, arch):
     """ Return the RTEMS architecture path, ie sparc-rtems4.11."""
-    return '%s-%s' % (arch, default_postfix)
+    return '%s-rtems%s' % (arch, version)
 
-def arch_bsp_path(arch_bsp):
+def arch_bsp_path(version, arch_bsp):
     """ Return the BSP path."""
-    return '%s/%s' % (arch_rtems_version(arch(arch_bsp)), bsp(arch_bsp))
+    return '%s/%s' % (arch_rtems_version(version, arch(arch_bsp)), bsp(arch_bsp))
 
-def arch_bsp_include_path(arch_bsp):
+def arch_bsp_include_path(version, arch_bsp):
     """ Return the BSP include path."""
-    return '%s/lib/include' % (arch_bsp_path(arch_bsp))
+    return '%s/lib/include' % (arch_bsp_path(version, arch_bsp))
 
-def arch_bsp_lib_path(arch_bsp):
+def arch_bsp_lib_path(version, arch_bsp):
     """ Return the BSP library path. """
-    return '%s/lib' % (arch_bsp_path(arch_bsp))
+    return '%s/lib' % (arch_bsp_path(version, arch_bsp))
 
 def library_path(library, cc, cflags):
     cmd = cc + cflags + ['-print-file-name=%s' % library]
