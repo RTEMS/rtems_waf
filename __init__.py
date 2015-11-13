@@ -3,4 +3,4 @@
 # This file's license is 2-clause BSD as in this distribution's LICENSE.2 file.
 #
 
-__all__ = ['rtems']
+__all__ = ['rtems', 'pkgconfig']
