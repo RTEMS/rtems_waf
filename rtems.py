@@ -1,5 +1,5 @@
 #
-# Copyright 2012, 2013 Chris Johns (chrisj@rtems.org)
+# Copyright 2012-2016 Chris Johns (chrisj@rtems.org)
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -33,6 +33,7 @@ from . import pkgconfig
 import re
 import subprocess
 
+rtems_default_version = None
 rtems_filters = None
 
 def options(opt):
@@ -62,8 +63,19 @@ def options(opt):
                    dest = 'show_commands',
                    help = 'Print the commands as strings.')
 
-def init(ctx, filters = None):
+def init(ctx, filters = None, version = None):
     global rtems_filters
+    global rtems_default_version
+
+    #
+    # Set the RTEMS filter to the context.
+    #
+    rtems_filters = filters
+
+    #
+    # Set the default version, can be overridden.
+    #
+    rtems_default_version = version
 
     try:
         import waflib.Options
@@ -74,11 +86,6 @@ def init(ctx, filters = None):
         #
         env = waflib.ConfigSet.ConfigSet()
         env.load(waflib.Options.lockfile)
-
-        #
-        # Set the RTEMS filter to the context.
-        #
-        rtems_filters = filters
 
         #
         # Check the tools, architectures and bsps.
@@ -117,6 +124,15 @@ def init(ctx, filters = None):
 
 def configure(conf, bsp_configure = None):
     #
+    # Check the environment for any flags.
+    #
+    for f in ['CC', 'CXX', 'AS', 'LD', 'AR', 'LINK_CC', 'LINK_CXX',
+              'CPPFLAGS', 'CFLAGS', 'CXXFLAGS', 'ASFLAGS', 'LINKFLAGS', 'LIB'
+              'WFLAGS', 'RFLAGS', 'MFLAGS', 'IFLAGS']:
+        if f in os.environ:
+            conf.msg('Environment variable set', f, color = 'RED')
+
+    #
     # Handle the show commands option.
     #
     if conf.options.show_commands:
@@ -138,6 +154,7 @@ def configure(conf, bsp_configure = None):
 
     _log_header(conf)
 
+    conf.msg('RTEMS Version', rtems_version, 'YELLOW')
     conf.msg('Architectures', ', '.join(archs), 'YELLOW')
 
     tools = {}
@@ -167,6 +184,23 @@ def configure(conf, bsp_configure = None):
         conf.load('gcc')
         conf.load('g++')
         conf.load('gas')
+
+        #
+        # Get the version of the tools being used.
+        #
+        rtems_cc = conf.env.CC[0]
+        try:
+            import waflib.Context
+            out = conf.cmd_and_log([rtems_cc, '--version'],
+                                   output = waflib.Context.STDOUT)
+        except Exception as e:
+            conf.fatal('CC version not found: %s' % (e.stderr))
+        #
+        # First line is the version
+        #
+        vline = out.split('\n')[0]
+        conf.msg('Compiler version (%s)' % (os.path.basename(rtems_cc)),
+                                            ' '.join(vline.split()[2:]))
 
         flags = _load_flags(conf, ab, rtems_path)
 
@@ -288,11 +322,14 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
     # Set defaults
     #
     if rtems_version is None:
-        m = re.compile('[^0-9.]*([0-9.]+)$').match(prefix)
-        if m:
-            rtems_version = m.group(1)
+        if rtems_default_version is None:
+            m = re.compile('[^0-9.]*([0-9.]+)$').match(prefix)
+            if m:
+                rtems_version = m.group(1)
+            else:
+                ctx.fatal('RTEMS version cannot derived from prefix: ' + prefix)
         else:
-            ctx.fatal('RTEMS version cannot derived from prefix: ' + prefix)
+            rtems_version = rtems_default_version
     if rtems_path is None:
         rtems_path = prefix
     if rtems_tools is None:
@@ -528,13 +565,11 @@ def _find_tools(conf, arch, paths, tools):
         arch_tools = {}
         arch_tools['CC']          = conf.find_program([arch + '-gcc'], path_list = paths)
         arch_tools['CXX']         = conf.find_program([arch + '-g++'], path_list = paths)
-        arch_tools['AS']          = conf.find_program([arch + '-gcc'], path_list = paths)
-        arch_tools['LD']          = conf.find_program([arch + '-ld'],  path_list = paths)
-        arch_tools['AR']          = conf.find_program([arch + '-ar'],  path_list = paths)
         arch_tools['LINK_CC']     = arch_tools['CC']
         arch_tools['LINK_CXX']    = arch_tools['CXX']
+        arch_tools['AS']          = conf.find_program([arch + '-gcc'], path_list = paths)
+        arch_tools['LD']          = conf.find_program([arch + '-ld'],  path_list = paths)
         arch_tools['AR']          = conf.find_program([arch + '-ar'], path_list = paths)
-        arch_tools['LD']          = conf.find_program([arch + '-ld'], path_list = paths)
         arch_tools['NM']          = conf.find_program([arch + '-nm'], path_list = paths)
         arch_tools['OBJDUMP']     = conf.find_program([arch + '-objdump'], path_list = paths)
         arch_tools['OBJCOPY']     = conf.find_program([arch + '-objcopy'], path_list = paths)
