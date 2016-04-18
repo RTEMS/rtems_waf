@@ -595,7 +595,7 @@ def _find_installed_archs(config, path, version):
         a = subprocess.check_output([config, '--list-format', '"%(arch)s"'])
         a = a[:-1].replace('"', '')
         archs = set(a.split())
-        archs = ['%s-rtems4.11' % (x) for x in archs]
+        archs = ['%s-rtems%s' % (x, version) for x in archs]
     archs.sort()
     return archs
 
