@@ -112,13 +112,14 @@ def init(ctx, filters = None, version = None):
                     variant = x
 
         #
-        # Add the various commands.
+        # Transform the command to per BSP commands.
         #
-        for cmd in ['build', 'clean', 'install']:
-            if cmd in waflib.Options.commands:
-                waflib.Options.commands.remove(cmd)
+        commands = []
+        for cmd in waflib.Options.commands:
+            if cmd in ['build', 'clean', 'install']:
                 for x in arch_bsps:
-                    waflib.Options.commands.insert(0, cmd + '-' + x)
+                    commands += [cmd + '-' + x]
+        waflib.Options.commands = commands
     except:
         pass
 
@@ -771,8 +772,6 @@ from waflib.Tools.ccroot import link_task, USELIB_VARS
 
 USELIB_VARS['rap'] = set(['RTEMS_LINKFLAGS'])
 USELIB_VARS['rtrace'] = set(['RTRACE_FLAGS', 'RTRACE_CFG', 'RTRACE_WRAPPER', 'RTRACE_LINKCMDS'])
-
-@TaskGen.extension('.c')
 
 class rap(link_task):
     "Link object files into a RTEMS application"
