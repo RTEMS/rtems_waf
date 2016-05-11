@@ -119,6 +119,8 @@ def init(ctx, filters = None, version = None):
             if cmd in ['build', 'clean', 'install']:
                 for x in arch_bsps:
                     commands += [cmd + '-' + x]
+            else:
+                commands += [cmd]
         waflib.Options.commands = commands
     except:
         pass
