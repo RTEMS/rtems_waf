@@ -221,6 +221,7 @@ def configure(conf, bsp_configure = None):
         conf.env.IFLAGS    = cflags['includes']
         conf.env.LINKFLAGS = cflags['cflags'] + ldflags['ldflags']
         conf.env.LIB       = flags['LIB']
+        conf.env.LIBPATH   = ldflags['libpath']
 
         conf.env.RTRACE_WRAPPER_ST = '-W %s'
 
@@ -513,6 +514,16 @@ def library_path(library, cc, cflags):
         return os.path.dirname(lib)
     return None
 
+def root_filesystem(bld, name, files, tar, obj):
+    bld(name = name + '_tar',
+        target = tar,
+        source = files,
+        rule = 'SDIR=$PWD && cd ../.. && tar --format=ustar -cf $SDIR/${TGT} $(echo "${SRC}" | sed -e "s/\.\.\/\.\.\///\")')
+    bld.objects(name = name,
+                target = obj,
+                source = tar,
+                rule = '${OBJCOPY} -I binary -B ${RTEMS_ARCH} ${OBJCOPY_FLAGS} ${SRC} ${TGT}')
+
 def clone_tasks(bld):
     if bld.cmd == 'build':
         for obj in bld.all_task_gen[:]:
@@ -713,6 +724,7 @@ def _filter_flags(label, flags, arch, rtems_path):
     flag_groups = \
         [ { 'key': 'warnings', 'path': False, 'flags': { '-W': 1 }, 'cflags': False, 'lflags': False },
           { 'key': 'includes', 'path': True,  'flags': { '-I': 1, '-isystem': 2, '-sysroot': 2 } },
+          { 'key': 'libpath',  'path': True,  'flags': { '-L': 1 } },
           { 'key': 'machines', 'path': True,  'flags': { '-O': 1, '-m': 1, '-f': 1 } },
           { 'key': 'specs',    'path': True,  'flags': { '-q': 1, '-B': 2, '--specs': 2 } } ]
 
