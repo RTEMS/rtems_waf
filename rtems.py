@@ -32,12 +32,13 @@ import os.path
 from . import pkgconfig
 import re
 import subprocess
+import sys
 
 rtems_default_version = None
 rtems_filters = None
 rtems_long_commands = False
 
-windows = os.name == 'nt'
+windows = os.name == 'nt' or sys.platform in ['msys', 'cygwin']
 
 def options(opt):
     opt.add_option('--rtems',
