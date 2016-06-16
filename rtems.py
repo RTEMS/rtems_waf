@@ -618,7 +618,7 @@ def long_command_line():
                         os.close(fd)
                 # Line may be very long:
                 # Logs.debug('runner:' + ' '.join(flat))
-		cmd = [cmd[0], '@' + tmp]
+                cmd = [cmd[0], '@' + tmp]
             ret = super(self.__class__, self).exec_command(cmd, **kw)
         finally:
             if tmp:
