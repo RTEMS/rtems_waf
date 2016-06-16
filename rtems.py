@@ -37,6 +37,8 @@ rtems_default_version = None
 rtems_filters = None
 rtems_long_commands = False
 
+windows = os.name == 'nt'
+
 def options(opt):
     opt.add_option('--rtems',
                    default = None,
@@ -149,7 +151,7 @@ def configure(conf, bsp_configure = None):
         show_commands = 'yes'
     else:
         show_commands = 'no'
-    if rtems_long_commands and os.name == 'nt':
+    if rtems_long_commands and windows:
         long_commands = 'yes'
     else:
         long_commands = 'no'
@@ -533,10 +535,13 @@ def library_path(library, cc, cflags):
     return None
 
 def root_filesystem(bld, name, files, tar, obj):
+    tar_rule = 'tar -cf ${TGT} --format=ustar -C ../.. $(echo "${SRC}" | sed -e \'s/\.\.\/\.\.\///\')'
+    if windows:
+        tar_rule = 'sh -c "%s"' % (tar_rule)
     bld(name = name + '_tar',
         target = tar,
         source = files,
-        rule = 'SDIR=$PWD && cd ../.. && tar --format=ustar -cf $SDIR/${TGT} $(echo "${SRC}" | sed -e "s/\.\.\/\.\.\///\")')
+        rule = tar_rule)
     bld.objects(name = name,
                 target = obj,
                 source = tar,
