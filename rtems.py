@@ -35,6 +35,7 @@ import subprocess
 
 rtems_default_version = None
 rtems_filters = None
+rtems_long_commands = False
 
 def options(opt):
     opt.add_option('--rtems',
@@ -63,9 +64,10 @@ def options(opt):
                    dest = 'show_commands',
                    help = 'Print the commands as strings.')
 
-def init(ctx, filters = None, version = None):
+def init(ctx, filters = None, version = None, long_commands = False):
     global rtems_filters
     global rtems_default_version
+    global rtems_long_commands
 
     #
     # Set the RTEMS filter to the context.
@@ -76,6 +78,11 @@ def init(ctx, filters = None, version = None):
     # Set the default version, can be overridden.
     #
     rtems_default_version = version
+
+    #
+    # Set the long commands option.
+    #
+    rtems_long_commands = long_commands
 
     try:
         import waflib.Options
@@ -136,12 +143,16 @@ def configure(conf, bsp_configure = None):
             conf.msg('Environment variable set', f, color = 'RED')
 
     #
-    # Handle the show commands option.
+    # Handle the configurable commands options.
     #
     if conf.options.show_commands:
         show_commands = 'yes'
     else:
         show_commands = 'no'
+    if rtems_long_commands and os.name == 'nt':
+        long_commands = 'yes'
+    else:
+        long_commands = 'no'
 
     rtems_version, rtems_path, rtems_bin, rtems_tools, archs, arch_bsps = \
         check_options(conf,
@@ -167,6 +178,15 @@ def configure(conf, bsp_configure = None):
         conf.setenv(ab, env)
 
         conf.msg('Board Support Package', ab, 'YELLOW')
+
+        #
+        # Show and long commands support.
+        #
+        conf.env.SHOW_COMMANDS = show_commands
+        conf.env.LONG_COMMANDS = long_commands
+
+        conf.msg('Show commands', show_commands)
+        conf.msg('Long commands', long_commands)
 
         arch = _arch_from_arch_bsp(ab)
         bsp  = _bsp_from_arch_bsp(ab)
@@ -250,11 +270,6 @@ def configure(conf, bsp_configure = None):
         if bsp_configure:
             bsp_configure(conf, ab)
 
-        #
-        # Show commands support the user can supply.
-        #
-        conf.env.SHOW_COMMANDS = show_commands
-
         conf.setenv('', env)
 
     conf.env.RTEMS_TOOLS = rtems_tools
@@ -262,10 +277,13 @@ def configure(conf, bsp_configure = None):
     conf.env.ARCH_BSPS = arch_bsps
 
     conf.env.SHOW_COMMANDS = show_commands
+    conf.env.LONG_COMMANDS = long_commands
 
 def build(bld):
     if bld.env.SHOW_COMMANDS == 'yes':
         output_command_line()
+    if bld.env.LONG_COMMANDS == 'yes':
+        long_command_line()
 
 def load_cpuopts(conf, arch_bsp, rtems_path):
     options = ['RTEMS_DEBUG',
@@ -547,7 +565,8 @@ def output_command_line():
         if isinstance(cmd, str):
             Logs.info('%s' % cmd)
         else:
-            Logs.info('%s' % ' '.join(cmd)) # here is the change
+            cmd = ' '.join(cmd)
+            Logs.info('(%d) %s' % (len(cmd), cmd)) # here is the change
         Logs.debug('runner_env: kw=%s' % kw)
         try:
             if self.logger:
@@ -573,6 +592,40 @@ def output_command_line():
         return '' # no output on empty strings
 
     Task.__str__ = display
+
+#
+# From the extras. Use this to support long command lines.
+#
+def long_command_line():
+    def exec_command(self, cmd, **kw):
+        # workaround for command line length limit:
+        # http://support.microsoft.com/kb/830473
+        import tempfile
+        tmp = None
+        try:
+            if not isinstance(cmd, str) and len(str(cmd)) > 8192:
+                (fd, tmp) = tempfile.mkstemp(dir=self.generator.bld.bldnode.abspath())
+                flat = ['"%s"' % x.replace('\\', '\\\\').replace('"', '\\"') for x in cmd[1:]]
+                try:
+                    os.write(fd, ' '.join(flat).encode())
+                finally:
+                    if tmp:
+                        os.close(fd)
+                # Line may be very long:
+                # Logs.debug('runner:' + ' '.join(flat))
+		cmd = [cmd[0], '@' + tmp]
+            ret = super(self.__class__, self).exec_command(cmd, **kw)
+        finally:
+            if tmp:
+                os.remove(tmp)
+        return ret
+    for k in 'c cxx cprogram cxxprogram cshlib cxxshlib cstlib cxxstlib'.split():
+        cls = Task.classes.get(k)
+        if cls:
+            derived_class = type(k, (cls,), {})
+            derived_class.exec_command = exec_command
+            if hasattr(cls, 'hcode'):
+                derived_class.hcode = cls.hcode
 
 def _find_tools(conf, arch, paths, tools):
     if arch not in tools:
