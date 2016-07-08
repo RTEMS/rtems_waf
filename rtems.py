@@ -571,8 +571,8 @@ def output_command_line():
         if isinstance(cmd, str):
             Logs.info('%s' % cmd)
         else:
-            cmd = ' '.join(cmd)
-            Logs.info('(%d) %s' % (len(cmd), cmd)) # here is the change
+            cmdstr = ' '.join(cmd)
+            Logs.info('(%d) %s' % (len(cmdstr), cmdstr)) # here is the change
         Logs.debug('runner_env: kw=%s' % kw)
         try:
             if self.logger:
