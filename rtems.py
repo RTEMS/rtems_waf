@@ -536,7 +536,7 @@ def library_path(library, cc, cflags):
     return None
 
 def root_filesystem(bld, name, files, tar, obj):
-    tar_rule = 'tar -cf ${TGT} --format=ustar -C ../.. $(echo "${SRC}" | sed -e \'s/\.\.\/\.\.\///\')'
+    tar_rule = 'tar -cf ${TGT} --format=ustar -C ../.. $(echo "${SRC}" | sed -e \'s/\.\.\/\.\.\///g\')'
     if windows:
         tar_rule = 'sh -c "%s"' % (tar_rule)
     bld(name = name + '_tar',
