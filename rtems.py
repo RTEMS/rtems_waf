@@ -255,8 +255,6 @@ def configure(conf, bsp_configure = None):
                         msg = 'Checking for RTEMS CPU options header',
                         mandatory = True)
         load_cpuopts(conf, ab, rtems_path)
-        if conf.env['RTEMS_SMP'] == 'Yes':
-            conf.env.CXXFLAGS += ['-std=gnu++11']
         conf.multicheck({ 'header_name': 'rtems.h'},
                         msg = 'Checking for RTEMS header',
                         mandatory = True)
