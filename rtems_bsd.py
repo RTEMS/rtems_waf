@@ -26,6 +26,8 @@
 
 from __future__ import print_function
 
+import os.path
+
 try:
     import rtems_waf.rtems as rtems
 except:
@@ -56,7 +58,6 @@ def bsp_configure(conf, arch_bsp):
     if conf.options.rtems_libbsd is None:
         rtems_libbsd_path = conf.env.PREFIX
     else:
-        import os.path
         if not os.path.exists(conf.options.rtems_libbsd):
             conf.fatal('RTEMS LibBSD not found')
         rtems_libbsd_path = conf.options.rtems_libbsd
