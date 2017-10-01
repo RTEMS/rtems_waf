@@ -1,4 +1,4 @@
-#
+
 # Copyright 2012-2016 Chris Johns (chrisj@rtems.org)
 #
 # Redistribution and use in source and binary forms, with or without
@@ -21,6 +21,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+from __future__ import print_function
 
 #
 # RTEMS support for applications.
@@ -236,7 +238,7 @@ def configure(conf, bsp_configure = None):
                                arch, rtems_path)
 
         conf.env.CFLAGS    = cflags['cflags']
-        conf.env.CXXFLAGS  = conf.env.CFLAGS
+        conf.env.CXXFLAGS  = cflags['cflags']
         conf.env.ASFLAGS   = cflags['cflags']
         conf.env.WFLAGS    = cflags['warnings']
         conf.env.RFLAGS    = cflags['specs']
