@@ -69,7 +69,7 @@ def options(opt):
                    dest = 'show_commands',
                    help = 'Print the commands as strings.')
 
-def init(ctx, filters = None, version = None, long_commands = False):
+def init(ctx, filters = None, version = None, long_commands = False, bsp_init = None):
     global rtems_filters
     global rtems_default_version
     global rtems_long_commands
@@ -112,16 +112,18 @@ def init(ctx, filters = None, version = None, long_commands = False):
                           env.options['rtems_bsps'])
 
         #
-        # Update the contextes for all the bsps.
+        # Update the contexts for all the bsps.
         #
         from waflib.Build import BuildContext, CleanContext, \
             InstallContext, UninstallContext
+        contexts = []
         for x in arch_bsps:
             for y in (BuildContext, CleanContext, InstallContext, UninstallContext):
                 name = y.__name__.replace('Context','').lower()
                 class context(y):
                     cmd = name + '-' + x
                     variant = x
+                contexts += [context]
 
         #
         # Transform the command to per BSP commands.
@@ -136,6 +138,9 @@ def init(ctx, filters = None, version = None, long_commands = False):
         waflib.Options.commands = commands
     except:
         pass
+
+    if bsp_init:
+        bsp_init(ctx, env, contexts)
 
 def configure(conf, bsp_configure = None):
     #
