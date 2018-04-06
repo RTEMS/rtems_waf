@@ -89,6 +89,8 @@ def init(ctx, filters = None, version = None, long_commands = False, bsp_init = 
     #
     rtems_long_commands = long_commands
 
+    env = None
+    contexts = []
     try:
         import waflib.Options
         import waflib.ConfigSet
@@ -116,7 +118,6 @@ def init(ctx, filters = None, version = None, long_commands = False, bsp_init = 
         #
         from waflib.Build import BuildContext, CleanContext, \
             InstallContext, UninstallContext
-        contexts = []
         for x in arch_bsps:
             for y in (BuildContext, CleanContext, InstallContext, UninstallContext):
                 name = y.__name__.replace('Context','').lower()
