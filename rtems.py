@@ -579,6 +579,8 @@ def output_command_line():
         else:
             cmdstr = ' '.join(cmd)
             Logs.info('(%d) %s' % (len(cmdstr), cmdstr)) # here is the change
+        if not isinstance(kw['cwd'], str):
+            kw['cwd'] = str(kw['cwd'])
         Logs.debug('runner_env: kw=%s' % kw)
         try:
             if self.logger:
