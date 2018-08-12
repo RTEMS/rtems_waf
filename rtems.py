@@ -104,7 +104,7 @@ def init(ctx, filters = None, version = None, long_commands = False, bsp_init = 
         #
         # Check the tools, architectures and bsps.
         #
-        rtems_version, rtems_path, rtems_bin, rtems_tools, archs, arch_bsps = \
+        rtems_version, rtems_path, rtems_tools, archs, arch_bsps = \
             check_options(ctx,
                           env.options['prefix'],
                           env.options['rtems_tools'],
@@ -165,7 +165,7 @@ def configure(conf, bsp_configure = None):
     else:
         long_commands = 'no'
 
-    rtems_version, rtems_path, rtems_bin, rtems_tools, archs, arch_bsps = \
+    rtems_version, rtems_path, rtems_tools, archs, arch_bsps = \
         check_options(conf,
                       conf.options.prefix,
                       conf.options.rtems_tools,
@@ -211,7 +211,7 @@ def configure(conf, bsp_configure = None):
         conf.env.RTEMS_ARCH_RTEMS = arch
         conf.env.RTEMS_BSP = bsp
 
-        tools = _find_tools(conf, arch, [rtems_bin] + rtems_tools, tools)
+        tools = _find_tools(conf, arch, rtems_tools, tools)
         for t in tools[arch]:
             conf.env[t] = tools[arch][t]
 
@@ -377,10 +377,9 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
         rtems_config = os.path.join(rtems_path, 'rtems-config')
     else:
         ctx.fatal('RTEMS path is not valid. No lib/pkgconfig or rtems-config found.')
-    if os.path.exists(os.path.join(rtems_path, 'bin')):
-        rtems_bin = os.path.join(rtems_path, 'bin')
-    else:
-        ctx.fatal('RTEMS path is not valid. No bin directory found.')
+    rtems_share_rtems_version = os.path.join(rtems_path, 'share', 'rtems' + rtems_version)
+    if not os.path.exists(os.path.join(rtems_share_rtems_version)):
+        ctx.fatal('RTEMS path is not valid, "%s" not found.' % (rtems_share_rtems_version))
 
     #
     # We can more than one path to tools. This happens when testing different
@@ -437,7 +436,7 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
     #
     arch_bsps = filter(ctx, 'bsps', arch_bsps)
 
-    return rtems_version, rtems_path, rtems_bin, tools, archs, arch_bsps
+    return rtems_version, rtems_path, tools, archs, arch_bsps
 
 def check_env(ctx, var):
     if var in ctx.env and len(ctx.env[var]) != 0:
