@@ -143,6 +143,17 @@ def init(ctx, filters = None, version = None, long_commands = False, bsp_init = 
     if bsp_init:
         bsp_init(ctx, env, contexts)
 
+def test_application(more = []):
+    code =  ['#include <rtems.h>']
+    code += more
+    code += ['void Init(rtems_task_argument arg) { (void)arg; }']
+    code += ['#define CONFIGURE_APPLICATION_DOES_NOT_NEED_CLOCK_DRIVER']
+    code += ['#define CONFIGURE_MAXIMUM_TASKS 1']
+    code += ['#define CONFIGURE_RTEMS_INIT_TASKS_TABLE']
+    code += ['#define CONFIGURE_INIT']
+    code += ['#include <rtems/confdefs.h>']
+    return os.linesep.join(code)
+
 def configure(conf, bsp_configure = None):
     #
     # Check the environment for any flags.
@@ -188,7 +199,7 @@ def configure(conf, bsp_configure = None):
     for ab in arch_bsps:
         conf.setenv(ab, env)
 
-        conf.msg('Board Support Package', ab, 'YELLOW')
+        conf.msg('Board Support Package (BSP)', ab, 'YELLOW')
 
         #
         # Show and long commands support.
@@ -259,13 +270,10 @@ def configure(conf, bsp_configure = None):
         #
         # Checks for various RTEMS features.
         #
-        conf.multicheck({ 'header_name': 'rtems/score/cpuopts.h'},
-                        msg = 'Checking for RTEMS CPU options header',
-                        mandatory = True)
-        load_cpuopts(conf, ab, rtems_path)
-        conf.multicheck({ 'header_name': 'rtems.h'},
-                        msg = 'Checking for RTEMS header',
-                        mandatory = True)
+        conf.check_cc(fragment = test_application(),
+                      execute = False,
+                      msg = 'Checking for a valid RTEMS BSP installation')
+        load_cpuopts(conf)
 
         #
         # Add tweaks.
@@ -294,7 +302,7 @@ def build(bld):
     if bld.env.LONG_COMMANDS == 'yes':
         long_command_line()
 
-def load_cpuopts(conf, arch_bsp, rtems_path):
+def load_cpuopts(conf):
     options = ['RTEMS_DEBUG',
                'RTEMS_MULTIPROCESSING',
                'RTEMS_NEWLIB',
@@ -302,27 +310,24 @@ def load_cpuopts(conf, arch_bsp, rtems_path):
                'RTEMS_SMP',
                'RTEMS_NETWORKING']
     for opt in options:
-        enabled = check_opt(conf, opt, 'rtems/score/cpuopts.h', arch_bsp, rtems_path)
+        enabled = check_cpuopt(conf, opt)
         if enabled:
             conf.env[opt] = 'Yes'
         else:
             conf.env[opt] = 'No'
 
-def check_opt(conf, opt, header, arch_bsp, rtems_path):
-    code  = '#include <%s>%s' % (header, os.linesep)
-    code += '#ifndef %s%s' % (opt, os.linesep)
-    code += ' #error %s is not defined%s' % (opt, os.linesep)
-    code += '#endif%s' % (os.linesep)
-    code += '#if %s%s' % (opt, os.linesep)
-    code += ' /* %s is true */%s' % (opt, os.linesep)
-    code += '#else%s' % (os.linesep)
-    code += ' #error %s is false%s' % (opt, os.linesep)
-    code += '#endif%s' % (os.linesep)
-    code += 'int main() { return 0; }%s' % (os.linesep)
+def check_cpuopt(conf, opt):
+    code =  ['#ifndef %s' % (opt)]
+    code += ['  #error %s is not defined' % (opt)]
+    code += ['#endif']
+    code += ['#if %s' % (opt)]
+    code += ['  /* %s is true */' % (opt)]
+    code += ['#else']
+    code += ['  #error %s is false' % (opt)]
+    code += ['#endif']
     try:
-        conf.check_cc(fragment = code,
+        conf.check_cc(fragment = test_application(code),
                       execute = False,
-                      define_ret = False,
                       msg = 'Checking for %s' % (opt))
     except conf.errors.WafError:
         return False;
