@@ -54,7 +54,7 @@ def options(opt):
     opt.add_option('--rtems-version',
                    default = None,
                    dest = 'rtems_version',
-                   help = 'RTEMS version (default is derived from prefix).')
+                  help = 'RTEMS version (default is derived from prefix).')
     opt.add_option('--rtems-archs',
                    default = 'all',
                    dest = 'rtems_archs',
@@ -316,6 +316,33 @@ def load_cpuopts(conf):
         else:
             conf.env[opt] = 'No'
 
+def check(conf, *k, **kw):
+    if 'fragment' not in kw:
+        kw['fragment'] = test_application()
+    conf.check(k, kw)
+
+def check_cc(conf, *k, **kw):
+    if 'fragment' not in kw:
+        kw['fragment'] = test_application()
+    conf.check_cc(*k, **kw)
+
+def check_lib_path(ctx, lib, libpath = [], manditory = True):
+    lib_lib = 'lib%s.a' % (lib)
+    ctx.start_msg('Library %s' % (lib_lib))
+    cmd = '%s %s %s -print-file-name=%s' % (' '.join(ctx.env.CC),
+                                            ' '.join(ctx.env.CFLAGS),
+                                            ' '.join(['-B' + l for l in libpath]),
+                                            lib_lib)
+    out = ctx.cmd_and_log(cmd)
+    out = os.path.normpath(out.strip())
+    if out == lib_lib:
+        if manditory:
+            ctx.fatal('The library %s not found' % (lib_lib))
+        ctx.end_msg('not found')
+    else:
+        ctx.env['LIBPATH_lib%s' % (lib)] = '..' + '/..' * (ctx.path.height() - 1) + out
+        ctx.end_msg('found')
+
 def check_cpuopt(conf, opt):
     code =  ['#ifndef %s' % (opt)]
     code += ['  #error %s is not defined' % (opt)]
@@ -448,9 +475,11 @@ def check_env(ctx, var):
         return True
     return False
 
-def check(ctx, option):
+def check(ctx, option, setting = 'Yes'):
     if option in ctx.env:
-        return ctx.env[option] == 'Yes'
+        if isinstance(setting, bool):
+            return True
+        return ctx.env[option] == setting
     return False
 
 def check_debug(ctx):
@@ -660,9 +689,12 @@ def _find_tools(conf, arch, paths, tools):
         arch_tools['OBJCOPY']     = conf.find_program([arch + '-objcopy'], path_list = paths)
         arch_tools['READELF']     = conf.find_program([arch + '-readelf'], path_list = paths)
         arch_tools['STRIP']       = conf.find_program([arch + '-strip'], path_list = paths)
+        arch_tools['RANLIB']      = conf.find_program([arch + '-ranlib'], path_list = paths)
         arch_tools['RTEMS_LD']    = conf.find_program(['rtems-ld'], path_list = paths,
                                                       mandatory = False)
         arch_tools['RTEMS_TLD']   = conf.find_program(['rtems-tld'], path_list = paths,
+                                                      mandatory = False)
+        arch_tools['RTEMS_SYMS']  = conf.find_program(['rtems-syms'], path_list = paths,
                                                       mandatory = False)
         arch_tools['RTEMS_BIN2C'] = conf.find_program(['rtems-bin2c'], path_list = paths,
                                                       mandatory = False)
