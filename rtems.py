@@ -343,6 +343,14 @@ def check_lib_path(ctx, lib, libpath = [], mandatory = True):
         ctx.env['LIBPATH_lib%s' % (lib)] = '..' + '/..' * (ctx.path.height() - 1) + out
         ctx.end_msg('found')
 
+def check_lib(ctx, libs):
+    if not isinstance(libs, list):
+        lib = [libs]
+    for lib in libs:
+        if 'LIBPATH_lib%s' % (lib) not in ctx.env:
+            return False
+    return True
+
 def check_cpuopt(conf, opt):
     code =  ['#ifndef %s' % (opt)]
     code += ['  #error %s is not defined' % (opt)]
