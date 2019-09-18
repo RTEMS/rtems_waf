@@ -326,7 +326,7 @@ def check_cc(conf, *k, **kw):
         kw['fragment'] = test_application()
     conf.check_cc(*k, **kw)
 
-def check_lib_path(ctx, lib, libpath = [], manditory = True):
+def check_lib_path(ctx, lib, libpath = [], mandatory = True):
     lib_lib = 'lib%s.a' % (lib)
     ctx.start_msg('Library %s' % (lib_lib))
     cmd = '%s %s %s -print-file-name=%s' % (' '.join(ctx.env.CC),
@@ -336,7 +336,7 @@ def check_lib_path(ctx, lib, libpath = [], manditory = True):
     out = ctx.cmd_and_log(cmd)
     out = os.path.normpath(out.strip())
     if out == lib_lib:
-        if manditory:
+        if mandatory:
             ctx.fatal('The library %s not found' % (lib_lib))
         ctx.end_msg('not found')
     else:
