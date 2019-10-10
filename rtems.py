@@ -229,6 +229,7 @@ def configure(conf, bsp_configure = None):
         conf.load('gcc')
         conf.load('g++')
         conf.load('gas')
+        conf.load('gccdeps', tooldir = os.path.dirname(__file__))
 
         #
         # Get the version of the tools being used.
@@ -799,6 +800,11 @@ def _load_flags(conf, arch_bsp, path):
     flags['CFLAGS'] = _load_flags_set('CFLAGS', arch_bsp, conf, config, pkg)
     flags['LDFLAGS'] = _load_flags_set('LDFLAGS', arch_bsp, conf, config, pkg)
     flags['LIB'] = _load_flags_set('LIB', arch_bsp, conf, config, pkg)
+    #
+    # Handle gccdeps flags.
+    #
+    if '-MMD' in conf.env['CFLAGS']:
+        flags['CFLAGS'] += ['-MMD']
     return flags
 
 def _load_flags_set(flags, arch_bsp, conf, config, pkg):
@@ -836,7 +842,8 @@ def _filter_flags(label, flags, arch, rtems_path):
         [ { 'key': 'warnings', 'path': False, 'flags': { '-W': 1 }, 'cflags': False, 'lflags': False },
           { 'key': 'includes', 'path': True,  'flags': { '-I': 1, '-isystem': 2, '-sysroot': 2 } },
           { 'key': 'libpath',  'path': True,  'flags': { '-L': 1 } },
-          { 'key': 'machines', 'path': True,  'flags': { '-O': 1, '-m': 1, '-f': 1, '-G':1, '-E':1 } },
+          { 'key': 'machines', 'path': True,  'flags': { '-O': 1, '-m': 1, '-f': 1, '-G': 1, '-E': 1 } },
+          { 'key': 'prepro',   'path': False, 'flags': { '-MMD': 1 } },
           { 'key': 'specs',    'path': True,  'flags': { '-q': 1, '-B': 2, '--specs': 2 } } ]
 
     flags = _strip_cflags(flags)
@@ -871,8 +878,8 @@ def _filter_flags(label, flags, arch, rtems_path):
                     if label in fg and not fg[label]:
                         in_label = False
                     break
-            if in_label:
-                _flags[label] += opts
+        if in_label:
+            _flags[label] += opts
     return _flags
 
 def _strip_cflags(cflags):
