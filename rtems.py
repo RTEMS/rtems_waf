@@ -479,10 +479,11 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
 
     return rtems_version, rtems_path, tools, archs, arch_bsps
 
-def check_env(ctx, var):
-    if var in ctx.env and len(ctx.env[var]) != 0:
-        return True
-    return False
+def check_env(ctx, *env_vars):
+    for v in env_vars:
+        if v not in ctx.env or len(ctx.env[v]) == 0:
+            return False
+    return True
 
 def check(ctx, option, setting = 'Yes'):
     if option in ctx.env:
