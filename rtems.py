@@ -897,6 +897,52 @@ def _strip_cflags(cflags):
 def _log_header(conf):
     conf.to_log('-----------------------------------------')
 
+def _get_dir_hash(bld):
+    from waflib import ConfigSet, Options
+    import hashlib
+
+    env = ConfigSet.ConfigSet()
+    env.load(Options.lockfile)
+    prefix = env.options['prefix']
+    shahash = hashlib.sha1()
+
+    for root, dirs, files in os.walk(prefix):
+        for names in files:
+            filepath = os.path.join(root, names)
+            try:
+                f1 = open(filepath, 'rb')
+            except:
+                f1.close()
+                continue
+
+            while 1:
+                buf = f1.read(4096)
+                if not buf:
+                    break
+                shahash.update(hashlib.sha1(buf).hexdigest())
+            f1.close()
+    return shahash.hexdigest()
+
+def test_uninstall(bld):
+    from os import sys
+
+    print('Test: uninstall')
+    initial_hash = _get_dir_hash(bld)
+    print('Preinstall hash: %s' % (initial_hash))
+    try:
+        subprocess.call(['waf', 'install'])
+        subprocess.call(['waf', 'uninstall'])
+    except:
+        subprocess.call(['./waf', 'install'])
+        subprocess.call(['./waf', 'uninstall'])
+    final_hash = _get_dir_hash(bld)
+    print('Post install hash: %s' % (final_hash))
+
+    if (initial_hash == final_hash):
+        print("Test successful")
+    else:
+        print("Test failed")
+
 from waflib import Task
 from waflib import TaskGen
 from waflib import Utils
