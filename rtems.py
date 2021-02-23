@@ -195,6 +195,7 @@ def configure(conf, bsp_configure = None):
 
     tools = {}
     env = conf.env.derive()
+    conf.env.RTEMS_ARCH_BSP_LIST = arch_bsps
 
     for ab in arch_bsps:
         conf.setenv(ab, env)
