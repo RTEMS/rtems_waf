@@ -108,6 +108,7 @@ def _top(ctx):
         cts.fatal('no top path found')
     return str(top)
 
+
 def _load_released_version_config(ctx):
     '''Local worker to load a configuration file.'''
     top = _top(ctx)
@@ -243,6 +244,7 @@ def load_rtems_version_header(ctx, rtems_version, arch_bsp, incpaths):
                         _version_str = ls[2][1:-1]
             _is_loaded = True
             break
+
 
 def released(ctx):
     return _load_released_version(ctx)

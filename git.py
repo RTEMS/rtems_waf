@@ -26,9 +26,9 @@ from __future__ import print_function
 import os
 import os.path
 
+
 class repo:
     """An object to manage a git repo."""
-
     def _git_exit_code(self, ec):
         if ec:
             raise self.ctx.fatal('git command failed (%s): %d' %

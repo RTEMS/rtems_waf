@@ -26,6 +26,7 @@
 
 import os
 
+
 def _syms_rule(tsk):
     '''
     A rule handler so 'no_errcheck_out' can be set. This avoids the
@@ -34,12 +35,11 @@ def _syms_rule(tsk):
     setattr(tsk, 'no_errcheck_out', True)
     src = tsk.inputs[0].abspath()
     tgt = tsk.outputs[0].abspath()
-    cmd = '%s -e -C %s -c "%s" -o %s %s' % (' '.join(tsk.env.RTEMS_SYMS),
-                                            ' '.join(tsk.env.CC),
-                                            ' '.join(tsk.env.CFLAGS),
-                                            tgt,
-                                            src)
+    cmd = '%s -e -C %s -c "%s" -o %s %s' % (' '.join(
+        tsk.env.RTEMS_SYMS), ' '.join(tsk.env.CC), ' '.join(
+            tsk.env.CFLAGS), tgt, src)
     return tsk.exec_command(cmd)
+
 
 def syms(ctx, target, source):
     '''
@@ -55,11 +55,9 @@ def syms(ctx, target, source):
     :param source: The kernel base image to generate the symbol table of
     '''
     tgt = ctx.path.find_or_declare(target)
-    ctx(rule = _syms_rule,
-        target = tgt,
-        source = source,
-        color = 'CYAN')
+    ctx(rule=_syms_rule, target=tgt, source=source, color='CYAN')
     ctx.read_object(tgt)
+
 
 def _strip_rule(tsk):
     '''
@@ -72,6 +70,7 @@ def _strip_rule(tsk):
     tgt = tsk.outputs[0].abspath()
     cmd = '%s -d -o %s %s' % (' '.join(tsk.env.STRIP), tgt, src)
     return tsk.exec_command(cmd)
+
 
 def strip_debug_info(ctx, *k, **kw):
     '''
@@ -95,11 +94,12 @@ def strip_debug_info(ctx, *k, **kw):
             ctx.fatal('No name and source is not a path')
         name = 'strip-%s' % (os.path.basename(source))
     print(type(source), str(source), target)
-    ctx(rule = _strip_rule,
-        name = name,
-        target = target,
-        source = source,
-        color = 'CYAN')
+    ctx(rule=_strip_rule,
+        name=name,
+        target=target,
+        source=source,
+        color='CYAN')
+
 
 def _ranlib_rule(tsk):
     '''
@@ -112,7 +112,6 @@ def _ranlib_rule(tsk):
     cmd = '%s -t %s' % (' '.join(tsk.env.RANLIB), tgt)
     return tsk.exec_command(cmd)
 
+
 def ranlib(ctx, lib):
-    ctx(rule = _ranlib_rule,
-        name = 'ranlib-%s' % (lib),
-        source = lib)
+    ctx(rule=_ranlib_rule, name='ranlib-%s' % (lib), source=lib)

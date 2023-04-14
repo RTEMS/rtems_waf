@@ -1,4 +1,3 @@
-
 # Copyright 2012-2016 Chris Johns (chrisj@rtems.org)
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,35 +41,38 @@ rtems_long_commands = False
 
 windows = os.name == 'nt' or sys.platform in ['msys', 'cygwin']
 
+
 def options(opt):
     copts = opt.option_groups['configure options']
     copts.add_option('--rtems',
-                     default = None,
-                     dest = 'rtems_path',
-                     help = 'Path to an installed RTEMS (defaults to prefix).')
-    copts.add_option('--rtems-tools',
-                     default = None,
-                     dest = 'rtems_tools',
-                     help = 'Path to RTEMS tools (defaults to path to installed RTEMS).')
+                     default=None,
+                     dest='rtems_path',
+                     help='Path to an installed RTEMS (defaults to prefix).')
+    copts.add_option(
+        '--rtems-tools',
+        default=None,
+        dest='rtems_tools',
+        help='Path to RTEMS tools (defaults to path to installed RTEMS).')
     copts.add_option('--rtems-version',
-                     default = None,
-                     dest = 'rtems_version',
-                     help = 'RTEMS version (default is derived from prefix).')
+                     default=None,
+                     dest='rtems_version',
+                     help='RTEMS version (default is derived from prefix).')
     copts.add_option('--rtems-archs',
-                     default = 'all',
-                     dest = 'rtems_archs',
-                     help = 'List of RTEMS architectures to build.')
+                     default='all',
+                     dest='rtems_archs',
+                     help='List of RTEMS architectures to build.')
     copts.add_option('--rtems-bsps',
-                     default = 'all',
-                     dest = 'rtems_bsps',
-                     help = 'List of BSPs to build.')
+                     default='all',
+                     dest='rtems_bsps',
+                     help='List of BSPs to build.')
     copts.add_option('--show-commands',
-                     action = 'store_true',
-                     default = False,
-                     dest = 'show_commands',
-                     help = 'Print the commands as strings.')
+                     action='store_true',
+                     default=False,
+                     dest='show_commands',
+                     help='Print the commands as strings.')
 
-def init(ctx, filters = None, version = None, long_commands = False, bsp_init = None):
+
+def init(ctx, filters=None, version=None, long_commands=False, bsp_init=None):
     global rtems_filters
     global rtems_default_version
     global rtems_long_commands
@@ -120,11 +122,14 @@ def init(ctx, filters = None, version = None, long_commands = False, bsp_init = 
         from waflib.Build import BuildContext, CleanContext, \
             InstallContext, UninstallContext
         for x in arch_bsps:
-            for y in (BuildContext, CleanContext, InstallContext, UninstallContext):
-                name = y.__name__.replace('Context','').lower()
+            for y in (BuildContext, CleanContext, InstallContext,
+                      UninstallContext):
+                name = y.__name__.replace('Context', '').lower()
+
                 class context(y):
                     cmd = name + '-' + x
                     variant = x
+
                 contexts += [context]
 
         #
@@ -144,8 +149,9 @@ def init(ctx, filters = None, version = None, long_commands = False, bsp_init = 
     if bsp_init:
         bsp_init(ctx, env, contexts)
 
-def test_application(more = []):
-    code =  ['#include <rtems.h>']
+
+def test_application(more=[]):
+    code = ['#include <rtems.h>']
     code += more
     code += ['void Init(rtems_task_argument arg) { (void)arg; }']
     code += ['#define CONFIGURE_APPLICATION_DOES_NOT_NEED_CLOCK_DRIVER']
@@ -155,15 +161,18 @@ def test_application(more = []):
     code += ['#include <rtems/confdefs.h>']
     return os.linesep.join(code)
 
-def configure(conf, bsp_configure = None):
+
+def configure(conf, bsp_configure=None):
     #
     # Check the environment for any flags.
     #
-    for f in ['CC', 'CXX', 'AS', 'LD', 'AR', 'LINK_CC', 'LINK_CXX',
-              'CPPFLAGS', 'CFLAGS', 'CXXFLAGS', 'ASFLAGS', 'LINKFLAGS', 'LIB'
-              'WFLAGS', 'RFLAGS', 'MFLAGS', 'IFLAGS']:
+    for f in [
+            'CC', 'CXX', 'AS', 'LD', 'AR', 'LINK_CC', 'LINK_CXX', 'CPPFLAGS',
+            'CFLAGS', 'CXXFLAGS', 'ASFLAGS', 'LINKFLAGS', 'LIB'
+            'WFLAGS', 'RFLAGS', 'MFLAGS', 'IFLAGS'
+    ]:
         if f in os.environ:
-            conf.msg('Environment variable set', f, color = 'RED')
+            conf.msg('Environment variable set', f, color='RED')
 
     #
     # Handle the configurable commands options.
@@ -213,7 +222,7 @@ def configure(conf, bsp_configure = None):
         conf.msg('Long commands', long_commands)
 
         arch = _arch_from_arch_bsp(ab)
-        bsp  = _bsp_from_arch_bsp(ab)
+        bsp = _bsp_from_arch_bsp(ab)
 
         conf.env.ARCH_BSP = '%s/%s' % (arch.split('-')[0], bsp)
 
@@ -231,7 +240,7 @@ def configure(conf, bsp_configure = None):
         conf.load('gcc')
         conf.load('g++')
         conf.load('gas')
-        conf.load('gccdeps', tooldir = os.path.dirname(__file__))
+        conf.load('gccdeps', tooldir=os.path.dirname(__file__))
 
         #
         # Get the version of the tools being used.
@@ -240,7 +249,7 @@ def configure(conf, bsp_configure = None):
         try:
             import waflib.Context
             out = conf.cmd_and_log([rtems_cc, '--version'],
-                                   output = waflib.Context.STDOUT)
+                                   output=waflib.Context.STDOUT)
         except Exception as e:
             conf.fatal('CC version not found: %s' % (e.stderr))
         #
@@ -248,34 +257,32 @@ def configure(conf, bsp_configure = None):
         #
         vline = out.split('\n')[0]
         conf.msg('Compiler version (%s)' % (os.path.basename(rtems_cc)),
-                                            ' '.join(vline.split()[2:]))
+                 ' '.join(vline.split()[2:]))
 
         flags = _load_flags(conf, ab, rtems_path)
 
-        cflags = _filter_flags('cflags', flags['CFLAGS'],
-                               arch, rtems_path)
-        ldflags = _filter_flags('ldflags', flags['LDFLAGS'],
-                               arch, rtems_path)
+        cflags = _filter_flags('cflags', flags['CFLAGS'], arch, rtems_path)
+        ldflags = _filter_flags('ldflags', flags['LDFLAGS'], arch, rtems_path)
 
-        conf.env.CFLAGS    = cflags['cflags']
-        conf.env.CXXFLAGS  = cflags['cflags']
-        conf.env.ASFLAGS   = cflags['cflags']
-        conf.env.WFLAGS    = cflags['warnings']
-        conf.env.RFLAGS    = cflags['specs']
-        conf.env.MFLAGS    = cflags['machines']
-        conf.env.IFLAGS    = _clean_inc_opts(cflags['includes'])
+        conf.env.CFLAGS = cflags['cflags']
+        conf.env.CXXFLAGS = cflags['cflags']
+        conf.env.ASFLAGS = cflags['cflags']
+        conf.env.WFLAGS = cflags['warnings']
+        conf.env.RFLAGS = cflags['specs']
+        conf.env.MFLAGS = cflags['machines']
+        conf.env.IFLAGS = _clean_inc_opts(cflags['includes'])
         conf.env.LINKFLAGS = cflags['cflags'] + ldflags['ldflags']
-        conf.env.LIB       = flags['LIB']
-        conf.env.LIBPATH   = ldflags['libpath']
+        conf.env.LIB = flags['LIB']
+        conf.env.LIBPATH = ldflags['libpath']
 
         conf.env.RTRACE_WRAPPER_ST = '-W %s'
 
         #
         # Checks for various RTEMS features.
         #
-        conf.check_cc(fragment = test_application(),
-                      execute = False,
-                      msg = 'Checking for a valid RTEMS BSP installation')
+        conf.check_cc(fragment=test_application(),
+                      execute=False,
+                      msg='Checking for a valid RTEMS BSP installation')
         load_cpuopts(conf)
 
         #
@@ -299,19 +306,19 @@ def configure(conf, bsp_configure = None):
     conf.env.SHOW_COMMANDS = show_commands
     conf.env.LONG_COMMANDS = long_commands
 
+
 def build(bld):
     if bld.env.SHOW_COMMANDS == 'yes':
         output_command_line()
     if bld.env.LONG_COMMANDS == 'yes':
         long_command_line()
 
+
 def load_cpuopts(conf):
-    options = ['RTEMS_DEBUG',
-               'RTEMS_MULTIPROCESSING',
-               'RTEMS_NEWLIB',
-               'RTEMS_POSIX_API',
-               'RTEMS_SMP',
-               'RTEMS_NETWORKING']
+    options = [
+        'RTEMS_DEBUG', 'RTEMS_MULTIPROCESSING', 'RTEMS_NEWLIB',
+        'RTEMS_POSIX_API', 'RTEMS_SMP', 'RTEMS_NETWORKING'
+    ]
     for opt in options:
         enabled = check_cpuopt(conf, opt)
         if enabled:
@@ -319,23 +326,24 @@ def load_cpuopts(conf):
         else:
             conf.env[opt] = 'No'
 
+
 def check(conf, *k, **kw):
     if 'fragment' not in kw:
         kw['fragment'] = test_application()
     conf.check(k, kw)
+
 
 def check_cc(conf, *k, **kw):
     if 'fragment' not in kw:
         kw['fragment'] = test_application()
     conf.check_cc(*k, **kw)
 
-def check_lib_path(ctx, lib, libpath = [], mandatory = True):
+
+def check_lib_path(ctx, lib, libpath=[], mandatory=True):
     lib_lib = 'lib%s.a' % (lib)
     ctx.start_msg('Library %s' % (lib_lib))
-    cmd = '%s %s %s -print-file-name=%s' % (' '.join(ctx.env.CC),
-                                            ' '.join(ctx.env.CFLAGS),
-                                            ' '.join(['-B' + l for l in libpath]),
-                                            lib_lib)
+    cmd = '%s %s %s -print-file-name=%s' % (' '.join(ctx.env.CC), ' '.join(
+        ctx.env.CFLAGS), ' '.join(['-B' + l for l in libpath]), lib_lib)
     out = ctx.cmd_and_log(cmd)
     out = os.path.normpath(out.strip())
     if out == lib_lib:
@@ -343,8 +351,10 @@ def check_lib_path(ctx, lib, libpath = [], mandatory = True):
             ctx.fatal('The library %s not found' % (lib_lib))
         ctx.end_msg('not found')
     else:
-        ctx.env['LIBPATH_lib%s' % (lib)] = '..' + '/..' * (ctx.path.height() - 1) + out
+        ctx.env['LIBPATH_lib%s' %
+                (lib)] = '..' + '/..' * (ctx.path.height() - 1) + out
         ctx.end_msg('found')
+
 
 def check_lib(ctx, libs):
     if not isinstance(libs, list):
@@ -354,8 +364,9 @@ def check_lib(ctx, libs):
             return False
     return True
 
+
 def check_cpuopt(conf, opt):
-    code =  ['#ifndef %s' % (opt)]
+    code = ['#ifndef %s' % (opt)]
     code += ['  #error %s is not defined' % (opt)]
     code += ['#endif']
     code += ['#if %s' % (opt)]
@@ -364,12 +375,13 @@ def check_cpuopt(conf, opt):
     code += ['  #error %s is false' % (opt)]
     code += ['#endif']
     try:
-        conf.check_cc(fragment = test_application(code),
-                      execute = False,
-                      msg = 'Checking for %s' % (opt))
+        conf.check_cc(fragment=test_application(code),
+                      execute=False,
+                      msg='Checking for %s' % (opt))
     except conf.errors.WafError:
-        return False;
+        return False
     return True
+
 
 def tweaks(conf, arch_bsp):
     #
@@ -389,9 +401,11 @@ def tweaks(conf, arch_bsp):
         conf.env.LINKFLAGS += ['-Wl,-Ttext,0x00100000']
 
     if '-ffunction-sections' in conf.env.CFLAGS:
-      conf.env.LINKFLAGS += ['-Wl,--gc-sections']
+        conf.env.LINKFLAGS += ['-Wl,--gc-sections']
 
-def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_archs, rtems_bsps):
+
+def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version,
+                  rtems_archs, rtems_bsps):
     #
     # Set defaults
     #
@@ -401,7 +415,8 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
             if m:
                 rtems_version = m.group(1)
             else:
-                ctx.fatal('RTEMS version cannot derived from prefix: ' + prefix)
+                ctx.fatal('RTEMS version cannot derived from prefix: ' +
+                          prefix)
         else:
             rtems_version = rtems_default_version
     if rtems_path is None:
@@ -419,10 +434,13 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
     elif os.path.exists(os.path.join(rtems_path, 'rtems-config')):
         rtems_config = os.path.join(rtems_path, 'rtems-config')
     else:
-        ctx.fatal('RTEMS path is not valid. No lib/pkgconfig or rtems-config found.')
-    rtems_share_rtems_version = os.path.join(rtems_path, 'share', 'rtems' + rtems_version)
+        ctx.fatal(
+            'RTEMS path is not valid. No lib/pkgconfig or rtems-config found.')
+    rtems_share_rtems_version = os.path.join(rtems_path, 'share',
+                                             'rtems' + rtems_version)
     if not os.path.exists(os.path.join(rtems_share_rtems_version)):
-        ctx.fatal('RTEMS path is not valid, "%s" not found.' % (rtems_share_rtems_version))
+        ctx.fatal('RTEMS path is not valid, "%s" not found.' %
+                  (rtems_share_rtems_version))
 
     #
     # We can more than one path to tools. This happens when testing different
@@ -434,7 +452,9 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
         if not os.path.exists(path):
             ctx.fatal('RTEMS tools path not found: ' + path)
         if not os.path.exists(os.path.join(path, 'bin')):
-            ctx.fatal('RTEMS tools path does not contain a \'bin\' directory: ' + path)
+            ctx.fatal(
+                'RTEMS tools path does not contain a \'bin\' directory: ' +
+                path)
         tools += [os.path.join(path, 'bin')]
 
     #
@@ -449,7 +469,8 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
     if rtems_archs == 'all':
         archs = _find_installed_archs(rtems_config, rtems_path, rtems_version)
     else:
-        archs = _check_archs(rtems_config, rtems_archs, rtems_path, rtems_version)
+        archs = _check_archs(rtems_config, rtems_archs, rtems_path,
+                             rtems_version)
 
     #
     # Filter the architectures.
@@ -467,9 +488,11 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
     # to those referenced by the BSPs.
     #
     if rtems_bsps == 'all':
-        arch_bsps = _find_installed_arch_bsps(rtems_config, rtems_path, archs, rtems_version)
+        arch_bsps = _find_installed_arch_bsps(rtems_config, rtems_path, archs,
+                                              rtems_version)
     else:
-        arch_bsps = _check_arch_bsps(rtems_bsps, rtems_config, rtems_path, archs, rtems_version)
+        arch_bsps = _check_arch_bsps(rtems_bsps, rtems_config, rtems_path,
+                                     archs, rtems_version)
 
     if len(arch_bsps) == 0:
         ctx.fatal('No valid arch/bsps found')
@@ -481,54 +504,68 @@ def check_options(ctx, prefix, rtems_tools, rtems_path, rtems_version, rtems_arc
 
     return rtems_version, rtems_path, tools, archs, arch_bsps
 
+
 def check_env(ctx, *env_vars):
     for v in env_vars:
         if v not in ctx.env or len(ctx.env[v]) == 0:
             return False
     return True
 
-def check(ctx, option, setting = 'Yes'):
+
+def check(ctx, option, setting='Yes'):
     if option in ctx.env:
         if isinstance(setting, bool):
             return True
         return ctx.env[option] == setting
     return False
 
+
 def check_debug(ctx):
     return check(ctx, 'RTEMS_DEBUG')
+
 
 def check_multiprocessing(ctx):
     return check(ctx, 'RTEMS_MULTIPROCESSING')
 
+
 def check_newlib(ctx):
     return check(ctx, 'RTEMS_NEWLIB')
+
 
 def check_posix(ctx):
     return check(ctx, 'RTEMS_POSIX_API')
 
+
 def check_smp(ctx):
     return check(ctx, 'RTEMS_SMP')
 
+
 def check_networking(ctx):
     return check(ctx, 'RTEMS_NETWORKING')
+
 
 def arch(arch_bsp):
     """ Given an arch/bsp return the architecture."""
     return _arch_from_arch_bsp(arch_bsp).split('-')[0]
 
+
 def bsp(arch_bsp):
     """ Given an arch/bsp return the BSP."""
     return _bsp_from_arch_bsp(arch_bsp)
 
+
 def arch_bsp_name(arch_bsp):
     return arch(arch_bsp) + '/' + bsp(arch_bsp)
+
 
 def arch_bsps(ctx):
     """ Return the list of arch/bsps we are building."""
     return ctx.env.ARCH_BSPS
 
+
 def arch_bsp_env(ctx, arch_bsp):
     return ctx.env_of_name(arch_bsp).derive()
+
 
 def filter(ctx, filter, items):
     if rtems_filters is None:
@@ -565,21 +602,27 @@ def filter(ctx, filter, items):
         ctx.fatal('Following %s not found: %s' % (filter, ', '.join(items_in)))
     return sorted(filtered_items)
 
+
 def arch_rtems_version(version, arch):
     """ Return the RTEMS architecture path, ie sparc-rtems4.11."""
     return '%s-rtems%s' % (arch, version)
 
+
 def arch_bsp_path(version, arch_bsp):
     """ Return the BSP path."""
-    return '%s/%s' % (arch_rtems_version(version, arch(arch_bsp)), bsp(arch_bsp))
+    return '%s/%s' % (arch_rtems_version(version,
+                                         arch(arch_bsp)), bsp(arch_bsp))
+
 
 def arch_bsp_include_path(version, arch_bsp):
     """ Return the BSP include path."""
     return '%s/lib/include' % (arch_bsp_path(version, arch_bsp))
 
+
 def arch_bsp_lib_path(version, arch_bsp):
     """ Return the BSP library path. """
     return '%s/lib' % (arch_bsp_path(version, arch_bsp))
+
 
 def library_path(library, cc, cflags):
     cmd = cc + cflags + ['-print-file-name=%s' % library]
@@ -589,18 +632,19 @@ def library_path(library, cc, cflags):
         return os.path.dirname(lib)
     return None
 
+
 def root_filesystem(bld, name, files, tar, obj):
     tar_rule = 'tar -cf ${TGT} --format=ustar -C ../.. $(echo "${SRC}" | sed -e \'s/\.\.\/\.\.\///g\')'
     if windows:
         tar_rule = 'sh -c "%s"' % (tar_rule)
-    bld(name = name + '_tar',
-        target = tar,
-        source = files,
-        rule = tar_rule)
-    bld.objects(name = name,
-                target = obj,
-                source = tar,
-                rule = '${OBJCOPY} -I binary -B ${RTEMS_ARCH} ${OBJCOPY_FLAGS} ${SRC} ${TGT}')
+    bld(name=name + '_tar', target=tar, source=files, rule=tar_rule)
+    bld.objects(
+        name=name,
+        target=obj,
+        source=tar,
+        rule=
+        '${OBJCOPY} -I binary -B ${RTEMS_ARCH} ${OBJCOPY_FLAGS} ${SRC} ${TGT}')
+
 
 def clone_tasks(bld):
     if bld.cmd == 'build':
@@ -612,6 +656,7 @@ def clone_tasks(bld):
                     cloned_obj.posted = True
             obj.posted = True
 
+
 #
 # From the demos. Use this to get the command to cut+paste to play.
 #
@@ -619,6 +664,7 @@ def output_command_line():
     # first, display strings, people like them
     from waflib import Utils, Logs
     from waflib.Context import Context
+
     def exec_command(self, cmd, **kw):
         subprocess = Utils.subprocess
         kw['shell'] = isinstance(cmd, str)
@@ -626,7 +672,7 @@ def output_command_line():
             Logs.info('%s' % cmd)
         else:
             cmdstr = ' '.join(cmd)
-            Logs.info('(%d) %s' % (len(cmdstr), cmdstr)) # here is the change
+            Logs.info('(%d) %s' % (len(cmdstr), cmdstr))  # here is the change
         if not isinstance(kw['cwd'], str):
             kw['cwd'] = str(kw['cwd'])
         Logs.debug('runner_env: kw=%s' % kw)
@@ -637,23 +683,30 @@ def output_command_line():
                 p = subprocess.Popen(cmd, **kw)
                 (out, err) = p.communicate()
                 if out:
-                    self.logger.debug('out: %s' % out.decode(sys.stdout.encoding or 'iso8859-1'))
+                    self.logger.debug(
+                        'out: %s' %
+                        out.decode(sys.stdout.encoding or 'iso8859-1'))
                 if err:
-                    self.logger.error('err: %s' % err.decode(sys.stdout.encoding or 'iso8859-1'))
+                    self.logger.error(
+                        'err: %s' %
+                        err.decode(sys.stdout.encoding or 'iso8859-1'))
                 return p.returncode
             else:
                 p = subprocess.Popen(cmd, **kw)
                 return p.wait()
         except OSError:
             return -1
+
     Context.exec_command = exec_command
 
     # Change the outputs for tasks too
     from waflib.Task import Task
+
     def display(self):
-        return '' # no output on empty strings
+        return ''  # no output on empty strings
 
     Task.__str__ = display
+
 
 #
 # From the extras. Use this to support long command lines.
@@ -666,8 +719,12 @@ def long_command_line():
         tmp = None
         try:
             if not isinstance(cmd, str) and len(str(cmd)) > 8192:
-                (fd, tmp) = tempfile.mkstemp(dir=self.generator.bld.bldnode.abspath())
-                flat = ['"%s"' % x.replace('\\', '\\\\').replace('"', '\\"') for x in cmd[1:]]
+                (fd, tmp) = tempfile.mkstemp(
+                    dir=self.generator.bld.bldnode.abspath())
+                flat = [
+                    '"%s"' % x.replace('\\', '\\\\').replace('"', '\\"')
+                    for x in cmd[1:]
+                ]
                 try:
                     os.write(fd, ' '.join(flat).encode())
                 finally:
@@ -681,41 +738,54 @@ def long_command_line():
             if tmp:
                 os.remove(tmp)
         return ret
-    for k in 'c cxx cprogram cxxprogram cshlib cxxshlib cstlib cxxstlib'.split():
+
+    for k in 'c cxx cprogram cxxprogram cshlib cxxshlib cstlib cxxstlib'.split(
+    ):
         cls = Task.classes.get(k)
         if cls:
-            derived_class = type(k, (cls,), {})
+            derived_class = type(k, (cls, ), {})
             derived_class.exec_command = exec_command
             if hasattr(cls, 'hcode'):
                 derived_class.hcode = cls.hcode
 
+
 def _find_tools(conf, arch, paths, tools):
     if arch not in tools:
         arch_tools = {}
-        arch_tools['CC']          = conf.find_program([arch + '-gcc'], path_list = paths)
-        arch_tools['CXX']         = conf.find_program([arch + '-g++'], path_list = paths)
-        arch_tools['LINK_CC']     = arch_tools['CC']
-        arch_tools['LINK_CXX']    = arch_tools['CXX']
-        arch_tools['AS']          = conf.find_program([arch + '-gcc'], path_list = paths)
-        arch_tools['LD']          = conf.find_program([arch + '-ld'],  path_list = paths)
-        arch_tools['AR']          = conf.find_program([arch + '-ar'], path_list = paths)
-        arch_tools['NM']          = conf.find_program([arch + '-nm'], path_list = paths)
-        arch_tools['OBJDUMP']     = conf.find_program([arch + '-objdump'], path_list = paths)
-        arch_tools['OBJCOPY']     = conf.find_program([arch + '-objcopy'], path_list = paths)
-        arch_tools['READELF']     = conf.find_program([arch + '-readelf'], path_list = paths)
-        arch_tools['STRIP']       = conf.find_program([arch + '-strip'], path_list = paths)
-        arch_tools['RANLIB']      = conf.find_program([arch + '-ranlib'], path_list = paths)
-        arch_tools['RTEMS_LD']    = conf.find_program(['rtems-ld'], path_list = paths,
-                                                      mandatory = False)
-        arch_tools['RTEMS_TLD']   = conf.find_program(['rtems-tld'], path_list = paths,
-                                                      mandatory = False)
-        arch_tools['RTEMS_SYMS']  = conf.find_program(['rtems-syms'], path_list = paths,
-                                                      mandatory = False)
-        arch_tools['RTEMS_BIN2C'] = conf.find_program(['rtems-bin2c'], path_list = paths,
-                                                      mandatory = False)
-        arch_tools['TAR']         = conf.find_program(['tar'], mandatory = False)
+        arch_tools['CC'] = conf.find_program([arch + '-gcc'], path_list=paths)
+        arch_tools['CXX'] = conf.find_program([arch + '-g++'], path_list=paths)
+        arch_tools['LINK_CC'] = arch_tools['CC']
+        arch_tools['LINK_CXX'] = arch_tools['CXX']
+        arch_tools['AS'] = conf.find_program([arch + '-gcc'], path_list=paths)
+        arch_tools['LD'] = conf.find_program([arch + '-ld'], path_list=paths)
+        arch_tools['AR'] = conf.find_program([arch + '-ar'], path_list=paths)
+        arch_tools['NM'] = conf.find_program([arch + '-nm'], path_list=paths)
+        arch_tools['OBJDUMP'] = conf.find_program([arch + '-objdump'],
+                                                  path_list=paths)
+        arch_tools['OBJCOPY'] = conf.find_program([arch + '-objcopy'],
+                                                  path_list=paths)
+        arch_tools['READELF'] = conf.find_program([arch + '-readelf'],
+                                                  path_list=paths)
+        arch_tools['STRIP'] = conf.find_program([arch + '-strip'],
+                                                path_list=paths)
+        arch_tools['RANLIB'] = conf.find_program([arch + '-ranlib'],
+                                                 path_list=paths)
+        arch_tools['RTEMS_LD'] = conf.find_program(['rtems-ld'],
+                                                   path_list=paths,
+                                                   mandatory=False)
+        arch_tools['RTEMS_TLD'] = conf.find_program(['rtems-tld'],
+                                                    path_list=paths,
+                                                    mandatory=False)
+        arch_tools['RTEMS_SYMS'] = conf.find_program(['rtems-syms'],
+                                                     path_list=paths,
+                                                     mandatory=False)
+        arch_tools['RTEMS_BIN2C'] = conf.find_program(['rtems-bin2c'],
+                                                      path_list=paths,
+                                                      mandatory=False)
+        arch_tools['TAR'] = conf.find_program(['tar'], mandatory=False)
         tools[arch] = arch_tools
     return tools
+
 
 def _find_installed_archs(config, path, version):
     archs = []
@@ -731,6 +801,7 @@ def _find_installed_archs(config, path, version):
     archs.sort()
     return archs
 
+
 def _check_archs(config, req, path, version):
     installed = _find_installed_archs(config, path, version)
     archs = []
@@ -740,6 +811,7 @@ def _check_archs(config, req, path, version):
             archs += [arch]
     archs.sort()
     return archs
+
 
 def _find_installed_arch_bsps(config, path, archs, version):
     arch_bsps = []
@@ -755,6 +827,7 @@ def _find_installed_arch_bsps(config, path, archs, version):
         arch_bsps = [x for x in set(ab.split())]
     arch_bsps.sort()
     return arch_bsps
+
 
 def _check_arch_bsps(req, config, path, archs, version):
     archs_bsps = []
@@ -781,14 +854,18 @@ def _check_arch_bsps(req, config, path, archs, version):
     bsps.sort()
     return bsps
 
+
 def _arch_from_arch_bsp(arch_bsp):
     return '-'.join(arch_bsp.split('-')[:2])
+
 
 def _bsp_from_arch_bsp(arch_bsp):
     return '-'.join(arch_bsp.split('-')[2:])
 
+
 def _pkgconfig_path(path):
     return os.path.join(path, 'lib', 'pkgconfig')
+
 
 def _load_flags(conf, arch_bsp, path):
     if not os.path.exists(path):
@@ -813,6 +890,7 @@ def _load_flags(conf, arch_bsp, path):
         flags['CFLAGS'] += ['-MMD']
     return flags
 
+
 def _load_flags_set(flags, arch_bsp, conf, config, pkg):
     conf.to_log('%s ->' % flags)
     if pkg is not None:
@@ -823,9 +901,11 @@ def _load_flags_set(flags, arch_bsp, conf, config, pkg):
             conf.to_log('pkconfig warning: ' + e.msg)
         conf.to_log('  ' + flagstr)
     else:
-        flags_map = { 'CFLAGS': '--cflags',
-                      'LDFLAGS': '--ldflags',
-                      'LIB': '--libs' }
+        flags_map = {
+            'CFLAGS': '--cflags',
+            'LDFLAGS': '--ldflags',
+            'LIB': '--libs'
+        }
         ab = arch_bsp.split('-')
         #conf.check_cfg(path = config,
         #               package = '',
@@ -834,13 +914,16 @@ def _load_flags_set(flags, arch_bsp, conf, config, pkg):
         #print conf.env
         #print '%r' % conf
         #flagstr = '-l -c'
-        flagstr = subprocess.check_output([config, '--bsp', '%s/%s' % (ab[0], ab[2]), flags_map[flags]])
+        flagstr = subprocess.check_output(
+            [config, '--bsp',
+             '%s/%s' % (ab[0], ab[2]), flags_map[flags]])
         #print flags, ">>>>", flagstr
         if flags == 'CFLAGS':
             flagstr += ' -DWAF_BUILD=1'
         if flags == 'LIB':
             flagstr = 'rtemscpu rtemsbsp c rtemscpu rtemsbsp'
     return flagstr.split()
+
 
 def _clean_inc_opts(incpaths):
     paths = []
@@ -852,6 +935,7 @@ def _clean_inc_opts(incpaths):
                 break
         paths += [ip]
     return paths
+
 
 def _filter_flags(label, flags, arch, rtems_path):
 
@@ -865,7 +949,7 @@ def _filter_flags(label, flags, arch, rtems_path):
 
     flags = _strip_cflags(flags)
 
-    _flags = { label: [] }
+    _flags = {label: []}
     for fg in flag_groups:
         _flags[fg['key']] = []
 
@@ -899,6 +983,7 @@ def _filter_flags(label, flags, arch, rtems_path):
             _flags[label] += opts
     return _flags
 
+
 def _strip_cflags(cflags):
     _cflags = []
     for o in cflags:
@@ -910,8 +995,10 @@ def _strip_cflags(cflags):
             _cflags += [o]
     return _cflags
 
+
 def _log_header(conf):
     conf.to_log('-----------------------------------------')
+
 
 def _get_dir_hash(bld):
     from waflib import ConfigSet, Options
@@ -939,6 +1026,7 @@ def _get_dir_hash(bld):
             f1.close()
     return shahash.hexdigest()
 
+
 def test_uninstall(bld):
     from os import sys
 
@@ -959,6 +1047,7 @@ def test_uninstall(bld):
     else:
         print("Test failed")
 
+
 from waflib import Task
 from waflib import TaskGen
 from waflib import Utils
@@ -966,19 +1055,25 @@ from waflib import Node
 from waflib.Tools.ccroot import link_task, USELIB_VARS
 
 USELIB_VARS['rap'] = set(['RTEMS_LINKFLAGS'])
-USELIB_VARS['rtrace'] = set(['RTRACE_FLAGS', 'RTRACE_CFG', 'RTRACE_WRAPPER', 'RTRACE_LINKCMDS'])
+USELIB_VARS['rtrace'] = set(
+    ['RTRACE_FLAGS', 'RTRACE_CFG', 'RTRACE_WRAPPER', 'RTRACE_LINKCMDS'])
+
 
 class rap(link_task):
     "Link object files into a RTEMS application"
     run_str = '${RTEMS_LD} ${RTEMS_LINKFLAGS} --cc ${CC} ${SRC} -o ${TGT[0].abspath()} ${STLIB_MARKER} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB}'
     ext_out = ['.rap']
-    vars    = ['RTEMS_LINKFLAGS', 'LINKDEPS']
+    vars = ['RTEMS_LINKFLAGS', 'LINKDEPS']
     inst_to = '${BINDIR}'
+
 
 class rtrace(link_task):
     "Link object files into a RTEMS trace application"
     run_str = '${RTEMS_TLD} ${RTACE_FLAGS} ${RTRACE_WRAPPER_ST:RTRACE_WRAPPER} -C ${RTRACE_CFG} -r ${RTEMS_PATH} -B ${ARCH_BSP} -c ${CC} -l ${CC} -- ${SRC} ${LINKFLAGS} ${RTRACE_LINKFLAGS} -o ${TGT[0].abspath()} ${STLIB_MARKER} ${STLIBPATH_ST:STLIBPATH} ${STLIB_ST:STLIB} ${LIBPATH_ST:LIBPATH} ${LIB_ST:LIB}'
     ext_out = ['.texe']
-    vars    = ['RTRACE_FLAGS', 'RTRACE_CFG', 'RTRACE_WRAPER', 'RTRACE_LINKFLAGS', 'LINKDEPS']
+    vars = [
+        'RTRACE_FLAGS', 'RTRACE_CFG', 'RTRACE_WRAPER', 'RTRACE_LINKFLAGS',
+        'LINKDEPS'
+    ]
     inst_to = '${BINDIR}'
     color = 'PINK'

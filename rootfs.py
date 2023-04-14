@@ -26,38 +26,40 @@
 
 import os
 
+
 def join(*paths):
     path = ''
     for p in paths:
         path = os.path.join(path, str(p))
     return path
 
+
 def copy(ctx, name, root, target, source):
     '''Copy a file from the source to the target.'''
     if isinstance(target, str):
         target = ctx.path.make_node(target)
     #print('copy: name=%s source=%s target=%s' % (name, source, target))
-    ctx(rule = 'cp ${SRC} ${TGT}',
-        name = name,
-        source = source,
-        target = target)
+    ctx(rule='cp ${SRC} ${TGT}', name=name, source=source, target=target)
+
 
 def tar(ctx, name, root, target, source, depends_on):
     #print('tar: name=%s root=%s target=%r source=%r' % (name, root, target, source))
-    ctx(rule = 'tar -C %s -cf ${TGT} .' % (root),
-        name = name,
-        target = target,
-        source = source,
-        root = join(ctx.path.get_bld(), root),
-        depends_on = depends_on,
-        color = 'CYAN')
+    ctx(rule='tar -C %s -cf ${TGT} .' % (root),
+        name=name,
+        target=target,
+        source=source,
+        root=join(ctx.path.get_bld(), root),
+        depends_on=depends_on,
+        color='CYAN')
+
 
 def bin2c(ctx, name, target, source):
-    ctx(rule = '${RTEMS_BIN2C} ${SRC} ${TGT}',
-        name = name,
-        target = target,
-        source = source,
-        color = 'PINK')
+    ctx(rule='${RTEMS_BIN2C} ${SRC} ${TGT}',
+        name=name,
+        target=target,
+        source=source,
+        color='PINK')
+
 
 def build(ctx, name, root, files):
     """The files are truples of the name, source and target files to put in the tar
@@ -89,7 +91,9 @@ def build(ctx, name, root, files):
         if not isinstance(f, tuple):
             ctx.fatal('rootfs build file is not a tuple')
         if len(f) != 3:
-            ctx.fatal('rootfs build file tuple has 3 items (name, src, dst): %s' % (str(f)))
+            ctx.fatal(
+                'rootfs build file tuple has 3 items (name, src, dst): %s' %
+                (str(f)))
         #
         # Copy the file as a build task. The file is copied to the tar file's
         # root.
@@ -100,10 +104,10 @@ def build(ctx, name, root, files):
         else:
             source = f[1]
         copy(ctx,
-             name = f[0],
-             root = root,
-             target = ctx.path.make_node(join(root, f[2])).get_bld(),
-             source = source)
+             name=f[0],
+             root=root,
+             target=ctx.path.make_node(join(root, f[2])).get_bld(),
+             source=source)
 
     ctx.add_group()
 
@@ -111,11 +115,11 @@ def build(ctx, name, root, files):
     # Tar build task.
     #
     tar(ctx,
-        name = name + '-tar',
-        root = join(ctx.path.get_bld(), root),
-        target = name + '.tar',
-        source = [join(root, f[2]) for f in files],
-        depends_on = [f[0] for f in files])
+        name=name + '-tar',
+        root=join(ctx.path.get_bld(), root),
+        target=name + '.tar',
+        source=[join(root, f[2]) for f in files],
+        depends_on=[f[0] for f in files])
 
     ctx.add_group()
 
@@ -123,21 +127,18 @@ def build(ctx, name, root, files):
     # Binary to C build task. It converts the tar file to a C file. This uses
     # the RTEMS Tools Project's `bin2c` command.
     #
-    bin2c(ctx,
-          name = name,
-          target = name + '-tar.c',
-          source = name + '.tar')
+    bin2c(ctx, name=name, target=name + '-tar.c', source=name + '.tar')
 
     ctx.add_group()
 
-    ctx.objects(features = 'c',
-                target = name + '-obj',
-                source = name + '-tar.c')
+    ctx.objects(features='c', target=name + '-obj', source=name + '-tar.c')
+
 
 def build_from_src_root(ctx, name, root):
     root_path = ctx.path.make_node(root)
     if not root_path.exists():
         ctx.fatal('tar root not found: %s' % (root_path))
     sources = [s.path_from(root_path) for s in root_path.ant_glob('**')]
-    build(ctx, name, root, [('%s-%s' % (name, os.path.basename(s)),
-                             join(root, s), s) for s in sources])
+    build(ctx, name, root,
+          [('%s-%s' % (name, os.path.basename(s)), join(root, s), s)
+           for s in sources])

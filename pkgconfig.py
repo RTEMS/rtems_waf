@@ -1,5 +1,5 @@
 # Copyright 2013 Chris Johns (chrisj@rtems.org)
-# 
+#
 # This file's license is 2-clause BSD as in this distribution's LICENSE.2 file.
 #
 
@@ -12,6 +12,7 @@
 #
 import re
 
+
 class error(Exception):
     def __init__(self, msg):
         self.msg = msg
@@ -19,8 +20,9 @@ class error(Exception):
     def __str__(self):
         return self.msg
 
+
 class package:
-    def __init__(self, file = None):
+    def __init__(self, file=None):
         self.defines = {}
         self.fields = {}
         if file:
@@ -57,7 +59,8 @@ class package:
                     rhs = l[d + 1:]
 
                     if tm:
-                        print('define: ' + str(define) + ', lhs: ' + lhs + ', ' + rhs)
+                        print('define: ' + str(define) + ', lhs: ' + lhs +
+                              ', ' + rhs)
 
                     if define:
                         self.defines[lhs] = rhs
@@ -65,7 +68,7 @@ class package:
                         self.fields[lhs] = rhs
 
     def get(self, label):
-        if label.lower()  not in self.fields:
+        if label.lower() not in self.fields:
             raise error('Label not found: ' + label)
         mre = re.compile('\$\{[^\}]+\}')
         s = self.fields[label.lower()]

@@ -35,21 +35,24 @@ except:
     import sys
     sys.exit(1)
 
+
 def init(ctx):
     pass
 
+
 def options(opt):
     opt.add_option('--net-config',
-                   default = 'config.inc',
-                   dest = 'net_config',
-                   help = 'Network test configuration.')
+                   default='config.inc',
+                   dest='net_config',
+                   help='Network test configuration.')
     opt.add_option('--rtems-libbsd',
-                   action = 'store',
-                   default = None,
-                   dest = 'rtems_libbsd',
-                   help = 'Path to install RTEMS LibBSD (defauls to prefix).')
+                   action='store',
+                   default=None,
+                   dest='rtems_libbsd',
+                   help='Path to install RTEMS LibBSD (defauls to prefix).')
 
-def bsp_configure(conf, arch_bsp, mandatory = True):
+
+def bsp_configure(conf, arch_bsp, mandatory=True):
     configure = mandatory
 
     if not mandatory and conf.options.rtems_libbsd is not None:
@@ -57,10 +60,9 @@ def bsp_configure(conf, arch_bsp, mandatory = True):
 
     if configure:
         conf.msg('RTEMS LibBSD',
-                 rtems.arch(arch_bsp) + '/' + rtems.bsp(arch_bsp),
-                 'YELLOW')
+                 rtems.arch(arch_bsp) + '/' + rtems.bsp(arch_bsp), 'YELLOW')
 
-        conf.check(header_name = 'dlfcn.h', features = 'c')
+        conf.check(header_name='dlfcn.h', features='c')
         if not rtems.check_posix(conf):
             conf.fatal('RTEMS kernel POSIX support is disabled; ' +
                        'configure RTEMS with --enable-posix')
@@ -75,19 +77,21 @@ def bsp_configure(conf, arch_bsp, mandatory = True):
                 rtems_libbsd_path = conf.env.PREFIX
 
         if not os.path.exists(rtems_libbsd_path):
-                conf.fatal('RTEMS LibBSD path not found: %s' % (rtems_libbsd_path))
+            conf.fatal('RTEMS LibBSD path not found: %s' % (rtems_libbsd_path))
 
-        rtems_libbsd_inc_path = os.path.join(rtems_libbsd_path,
-                                             rtems.arch_bsp_include_path(conf.env.RTEMS_VERSION,
-                                                                     conf.env.RTEMS_ARCH_BSP))
-        rtems_libbsd_lib_path = os.path.join(rtems_libbsd_path,
-                                             rtems.arch_bsp_lib_path(conf.env.RTEMS_VERSION,
-                                                                     conf.env.RTEMS_ARCH_BSP))
+        rtems_libbsd_inc_path = os.path.join(
+            rtems_libbsd_path,
+            rtems.arch_bsp_include_path(conf.env.RTEMS_VERSION,
+                                        conf.env.RTEMS_ARCH_BSP))
+        rtems_libbsd_lib_path = os.path.join(
+            rtems_libbsd_path,
+            rtems.arch_bsp_lib_path(conf.env.RTEMS_VERSION,
+                                    conf.env.RTEMS_ARCH_BSP))
 
         conf.env.IFLAGS += [rtems_libbsd_inc_path]
-        conf.check(header_name = 'machine/rtems-bsd-sysinit.h',
-                   features = 'c',
-                   includes = conf.env.IFLAGS)
+        conf.check(header_name='machine/rtems-bsd-sysinit.h',
+                   features='c',
+                   includes=conf.env.IFLAGS)
 
         conf.env.RTEMS_LIBBSD = 'Yes'
         conf.env.INCLUDES = conf.env.IFLAGS
@@ -95,6 +99,7 @@ def bsp_configure(conf, arch_bsp, mandatory = True):
         conf.env.LIB += ['bsd', 'z', 'm']
 
         configure_net_config(conf, arch_bsp)
+
 
 def configure_net_config(conf, arch_bsp):
     if check_libbsd(conf) and conf.options.net_config is not None:
@@ -106,12 +111,13 @@ def configure_net_config(conf, arch_bsp):
         try:
             net_cfg_lines = open(net_config).readlines()
         except:
-            conf.fatal('network configuraiton \'%s\' read failed' % (net_config))
+            conf.fatal('network configuraiton \'%s\' read failed' %
+                       (net_config))
 
-        tags = [ 'NET_CFG_SELF_IP',
-                 'NET_CFG_NETMASK',
-                 'NET_CFG_PEER_IP',
-                 'NET_CFG_GATEWAY_IP' ]
+        tags = [
+            'NET_CFG_SELF_IP', 'NET_CFG_NETMASK', 'NET_CFG_PEER_IP',
+            'NET_CFG_GATEWAY_IP'
+        ]
 
         lc = 0
         sed = 'sed '
@@ -137,14 +143,17 @@ def configure_net_config(conf, arch_bsp):
 
         conf.msg('Net Config', 'found', 'YELLOW')
 
+
 def check_libbsd(ctx):
     return rtems.check(ctx, 'RTEMS_LIBBSD')
 
+
 def check_net_config(ctx):
-    return rtems.check(ctx, 'NET_CONFIG', setting = True)
+    return rtems.check(ctx, 'NET_CONFIG', setting=True)
+
 
 def net_config_header(ctx, target):
-    ctx(target = target,
-        source = "rtems_waf/network-config.h.in",
-        rule = sed + " < ${SRC} > ${TGT}",
-        update_outputs = True)
+    ctx(target=target,
+        source="rtems_waf/network-config.h.in",
+        rule=sed + " < ${SRC} > ${TGT}",
+        update_outputs=True)
