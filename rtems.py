@@ -43,31 +43,32 @@ rtems_long_commands = False
 windows = os.name == 'nt' or sys.platform in ['msys', 'cygwin']
 
 def options(opt):
-    opt.add_option('--rtems',
-                   default = None,
-                   dest = 'rtems_path',
-                   help = 'Path to an installed RTEMS (defaults to prefix).')
-    opt.add_option('--rtems-tools',
-                   default = None,
-                   dest = 'rtems_tools',
-                   help = 'Path to RTEMS tools (defaults to path to installed RTEMS).')
-    opt.add_option('--rtems-version',
-                   default = None,
-                   dest = 'rtems_version',
-                  help = 'RTEMS version (default is derived from prefix).')
-    opt.add_option('--rtems-archs',
-                   default = 'all',
-                   dest = 'rtems_archs',
-                   help = 'List of RTEMS architectures to build.')
-    opt.add_option('--rtems-bsps',
-                   default = 'all',
-                   dest = 'rtems_bsps',
-                   help = 'List of BSPs to build.')
-    opt.add_option('--show-commands',
-                   action = 'store_true',
-                   default = False,
-                   dest = 'show_commands',
-                   help = 'Print the commands as strings.')
+    copts = opt.option_groups['configure options']
+    copts.add_option('--rtems',
+                     default = None,
+                     dest = 'rtems_path',
+                     help = 'Path to an installed RTEMS (defaults to prefix).')
+    copts.add_option('--rtems-tools',
+                     default = None,
+                     dest = 'rtems_tools',
+                     help = 'Path to RTEMS tools (defaults to path to installed RTEMS).')
+    copts.add_option('--rtems-version',
+                     default = None,
+                     dest = 'rtems_version',
+                     help = 'RTEMS version (default is derived from prefix).')
+    copts.add_option('--rtems-archs',
+                     default = 'all',
+                     dest = 'rtems_archs',
+                     help = 'List of RTEMS architectures to build.')
+    copts.add_option('--rtems-bsps',
+                     default = 'all',
+                     dest = 'rtems_bsps',
+                     help = 'List of BSPs to build.')
+    copts.add_option('--show-commands',
+                     action = 'store_true',
+                     default = False,
+                     dest = 'show_commands',
+                     help = 'Print the commands as strings.')
 
 def init(ctx, filters = None, version = None, long_commands = False, bsp_init = None):
     global rtems_filters
@@ -262,7 +263,7 @@ def configure(conf, bsp_configure = None):
         conf.env.WFLAGS    = cflags['warnings']
         conf.env.RFLAGS    = cflags['specs']
         conf.env.MFLAGS    = cflags['machines']
-        conf.env.IFLAGS    = cflags['includes']
+        conf.env.IFLAGS    = _clean_inc_opts(cflags['includes'])
         conf.env.LINKFLAGS = cflags['cflags'] + ldflags['ldflags']
         conf.env.LIB       = flags['LIB']
         conf.env.LIBPATH   = ldflags['libpath']
@@ -518,6 +519,9 @@ def arch(arch_bsp):
 def bsp(arch_bsp):
     """ Given an arch/bsp return the BSP."""
     return _bsp_from_arch_bsp(arch_bsp)
+
+def arch_bsp_name(arch_bsp):
+    return arch(arch_bsp) + '/' + bsp(arch_bsp)
 
 def arch_bsps(ctx):
     """ Return the list of arch/bsps we are building."""
@@ -837,6 +841,17 @@ def _load_flags_set(flags, arch_bsp, conf, config, pkg):
         if flags == 'LIB':
             flagstr = 'rtemscpu rtemsbsp c rtemscpu rtemsbsp'
     return flagstr.split()
+
+def _clean_inc_opts(incpaths):
+    paths = []
+    incopts = ['-I', '-isystem', '-sysroot']
+    for ip in incpaths:
+        for opt in incopts:
+            if ip.startswith(opt):
+                ip = ip[len(opt):]
+                break
+        paths += [ip]
+    return paths
 
 def _filter_flags(label, flags, arch, rtems_path):
 
