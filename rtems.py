@@ -270,7 +270,9 @@ def configure(conf, bsp_configure=None):
         conf.env.WFLAGS = cflags['warnings']
         conf.env.RFLAGS = cflags['specs']
         conf.env.MFLAGS = cflags['machines']
-        conf.env.IFLAGS = _clean_inc_opts(cflags['includes'])
+        conf.env.IFLAGS = _filter_inc_opts(cflags['includes'], '-I')
+        conf.env.ISYSTEM = _filter_inc_opts(cflags['includes'], '-isystem')
+        conf.env.ISYSROOT = _filter_inc_opts(cflags['includes'], '-sysroot')
         conf.env.LINKFLAGS = cflags['cflags'] + ldflags['ldflags']
         conf.env.LIB = flags['LIB']
         conf.env.LIBPATH = ldflags['libpath']
@@ -925,15 +927,12 @@ def _load_flags_set(flags, arch_bsp, conf, config, pkg):
     return flagstr.split()
 
 
-def _clean_inc_opts(incpaths):
+def _filter_inc_opts(incpaths, incopt):
     paths = []
-    incopts = ['-I', '-isystem', '-sysroot']
     for ip in incpaths:
-        for opt in incopts:
-            if ip.startswith(opt):
-                ip = ip[len(opt):]
-                break
-        paths += [ip]
+        if ip.startswith(incopt):
+            paths += [ip[len(incopt):]]
+            break
     return paths
 
 
