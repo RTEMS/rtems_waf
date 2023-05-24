@@ -858,11 +858,15 @@ def _check_arch_bsps(req, config, path, archs, version):
 
 
 def _arch_from_arch_bsp(arch_bsp):
-    return '-'.join(arch_bsp.split('-')[:2])
+    fields = arch_bsp.split('-')
+    rtems_field_index = next(i for i, field in enumerate(fields) if field.startswith('rtems'))
+    return '-'.join(fields[:(rtems_field_index + 1)])
 
 
 def _bsp_from_arch_bsp(arch_bsp):
-    return '-'.join(arch_bsp.split('-')[2:])
+    fields = arch_bsp.split('-')
+    rtems_field_index = next(i for i, field in enumerate(fields) if field.startswith('rtems'))
+    return '-'.join(fields[(rtems_field_index + 1):])
 
 
 def _pkgconfig_path(path):
