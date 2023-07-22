@@ -71,8 +71,8 @@ def bsp_configure(conf, arch_bsp, mandatory=True):
                        'configure RTEMS with --disable-networking')
         rtems_libbsd_path = conf.options.rtems_libbsd
         if rtems_libbsd_path is None:
-            if conf.options.rtems is None:
-                rtems_libbsd_path = conf.options.rtems
+            if conf.options.rtems_path is not None:
+                rtems_libbsd_path = conf.options.rtems_path
             else:
                 rtems_libbsd_path = conf.env.PREFIX
 
