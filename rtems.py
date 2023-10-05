@@ -714,6 +714,7 @@ def output_command_line():
 # From the extras. Use this to support long command lines.
 #
 def long_command_line():
+
     def exec_command(self, cmd, **kw):
         # workaround for command line length limit:
         # http://support.microsoft.com/kb/830473
@@ -864,12 +865,14 @@ def _arch_from_arch_bsp(arch_bsp):
             return '-'.join(fields[:(i + 1)])
     return None
 
+
 def _bsp_from_arch_bsp(arch_bsp):
     fields = arch_bsp.split('-')
     for i, field in enumerate(fields):
         if field.startswith('rtems') and fields[(i + 1):] is not None:
             return '-'.join(fields[(i + 1):])
     return None
+
 
 def _pkgconfig_path(path):
     return os.path.join(path, 'lib', 'pkgconfig')
