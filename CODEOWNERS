@@ -1,5 +1,8 @@
 # Please keep users, directories and files  sorted alphabetically.
 # Directories first
 
+[General Maintainer] @approvers/general/maintainer
+*
+
 [RTEMS Waf] @chris
 *
