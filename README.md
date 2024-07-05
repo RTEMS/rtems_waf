@@ -2,8 +2,8 @@ RTEMS Waf
 =========
 
 RTEMS Waf is a module that supports the Waf build system and RTEMS. The module
-is integrated into a project or library proividing Waf build support to create
-RTEMS libraries or executables.
+is integrated into a project or library providing Waf build support to create
+RTEMS libraries or executable.
 
 RTEMS Waf provides:
 
@@ -35,7 +35,7 @@ You can find the Waf project here:
 
   https://waf.io/
 
-Waf does not come as a package in distrubitions so you need to download and
+Waf does not come as a package in distributions so you need to download and
 install it.
 
   1. Waf is a Python program so you will also need to have a current Python
@@ -143,7 +143,7 @@ RTEMS 5, change for the specific version of RTEMS your project supports.
 
   5. Configure with your specific settings. In this case the path to the tools
      and the kernel are separate and provided on the command line. Your
-     envronment's path variable does not need to changed [^3]. We limit the build
+     environment's path variable does not need to changed [^3]. We limit the build
      to `sparc/erc32` BSP:
 
      ```
@@ -165,7 +165,7 @@ An RTEMS Waf Project
 RTEMS Waf provides a base to build RTEMS application.
 
 Waf provides a build system framework. You can use waf in your project by
-simply prooviding a list of files you wish to build and link to create an
+simply providing a list of files you wish to build and link to create an
 executable or you can use waf as framework which is integrated into your
 project to become is build system.
 
@@ -218,7 +218,7 @@ way for your project to control what RTEMS Waf accepts and rejects when
 automatically scanning the installed tools and RTEMS kernels. A filter is a
 Python dictionary and the following example will accept `arm` and `sparc` tool
 chains and filtering out the `bfin` tool chain. The filter will only build the
-`arm` acrhitecture and will accept all BSPs except ones starting with `lpc` if
+`arm` architecture and will accept all BSPs except ones starting with `lpc` if
 they are installed:
 
   ```python
@@ -272,7 +272,7 @@ A example call to RTEMS Waf's `configure()` is:
 
 The BSP configure hook is called at end of a BSP's configuration. The BSP's
 `conf` variable and the `arch/bsp` are passed as arguments. The `arch/bsp` is
-the RTEMS standard for specifing a BSP, for example `sparc/erc32`. The BSP
+the RTEMS standard for specifying a BSP, for example `sparc/erc32`. The BSP
 configure support can be used to check a BSP for header, check an RTEMS feature
 is present for a specific BSP or add per BSP build variant support:
 
@@ -409,5 +409,5 @@ Save the example C hello world as `hello.c`:
       tool used here lets you specify on the command line the tools and RTEMS
       paths and this is embedded in waf's configuration information. If you have
       a few source trees working at any one time with different tool sets or
-      configurations you can easly move between them safe in the knowledge that
+      configurations you can easily move between them safe in the knowledge that
       one build will not affect another.
