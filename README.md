@@ -46,7 +46,9 @@ install it.
   3. Place the waf executable in a personal directory that is in your path, for
      example $HOME/bin. Modify the file's permissions so it can be executed:
 
-     `$ chmod +x $HOME/bin/waf`
+     ```shell
+     $ chmod +x $HOME/bin/waf
+     ```
 
 Git Submodule
 -------------
@@ -56,16 +58,22 @@ the common waf support.
 
   1. Add RTEMS Waf a git submodule to your project:
 
-     `$ cd my_project`
-     `$ git submodule add git://git.rtems.org/rtems_waf.git rtems_waf`
+     ```shell
+     $ cd my_project
+     $ git submodule add git://git.rtems.org/rtems_waf.git rtems_waf
+     ```
 
   2. Initialize the submodule(s) for your project:
 
-     `$ git submodule init`
+     ```shell
+     $ git submodule init
+     ```
 
   3. Update the RTEMS Waf submodule:
  
-     `$ git submodule update rtems_waf`
+     ```shell
+     $ git submodule update rtems_waf
+     ```
 
      Note: the `rtems_waf` submodule name is provided as some projects 
            may have other submodules you may not wish to update.
@@ -73,7 +81,7 @@ the common waf support.
   4. When submodules are added they are headless which means they are not on a
      current branch. Switch to a branch:
 
-     ```
+     ```shell
      $ cd rtems_waf
      $ git checkout master
      $ cd ..
@@ -85,7 +93,7 @@ the common waf support.
   5. Update the RTEMS Waf submodule to the latest version on the selected 
      branch:
 
-     ```
+     ```shell
      $ cd rtems_waf
      $ git pull
      $ cd ..
@@ -93,21 +101,27 @@ the common waf support.
 
   6. Check the new submodule is part of your project and ready to be committed:
 
-     `$ git status`
+     ```shell
+     $ git status
+     ```
 
      The `rtems_waf` module will be listed as `modified`.
 
   7. Commit the change by adding it to your staged files:
 
-     `$ git add rtems_waf`
+     ```shell
+     $ git add rtems_waf
+     ```
 
      When ready commit:
 
-     `$ git commit`
+     ```shell
+     $ git commit
+     ```
 
      Review the changes and if they are correct push them:
 
-     ```
+     ```shell
      $ git log -p
      $ git push
      ```
@@ -136,7 +150,7 @@ RTEMS 5, change for the specific version of RTEMS your project supports.
 
   4. Populate the git submodule:
 
-     ```
+     ```shell
      $ git submodule init
      $ git submodule update rtems_waf
      ```
@@ -146,7 +160,7 @@ RTEMS 5, change for the specific version of RTEMS your project supports.
      environment's path variable does not need to changed [^3]. We limit the build
      to `sparc/erc32` BSP:
 
-     ```
+     ```shell
      $ waf configure --rtems=$HOME/development/rtems/bsps/5 \
                      --rtems-tools=$HOME/development/rtems/5 \
                      --rtems-bsps=sparc/erc32
@@ -177,7 +191,7 @@ Using RTEMS Waf as a submodule means it may not be present if the submodules
 have not been initialized and updated. This results in a Python error. The
 following import is recommended so a user friendly error is reported:
 
-```
+```python
  from __future__ import print_function
 
  try:
@@ -204,7 +218,7 @@ Waf's `init()` call lets you provide:
 
 A example call to RTEMS Waf's `init()` is:
 
-  ```
+  ```python
   rtems_version = "5"
 
   def init(ctx):
