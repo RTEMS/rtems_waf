@@ -60,7 +60,7 @@ the common waf support.
 
      ```shell
      $ cd my_project
-     $ git submodule add git://git.rtems.org/rtems_waf.git rtems_waf
+     $ git submodule add https://gitlab.rtems.org/rtems/tools/rtems_waf.git rtems_waf
      ```
 
   2. Initialize the submodule(s) for your project:
