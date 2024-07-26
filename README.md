@@ -23,8 +23,9 @@ RTEMS Waf provides:
 Bugs
 ----
 
-Please report issues to the RTEMS Users list mailto:users@rtems.org or raise a
-ticket in RTEMS's Trac under https://devel.rtems.org/.
+Please report issues to the rtems_waf GitLab:
+
+  https://gitlab.rtems.org/rtems/tools/rtems_waf
 
 Feedback is always welcome.
 
