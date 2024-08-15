@@ -106,12 +106,12 @@ def configure_net_config(conf, arch_bsp):
         net_config = conf.options.net_config
 
         if not os.path.exists(net_config):
-            conf.fatal('network configuraiton \'%s\' not found' % (net_config))
+            conf.fatal('network configuration \'%s\' not found' % (net_config))
 
         try:
             net_cfg_lines = open(net_config).readlines()
         except:
-            conf.fatal('network configuraiton \'%s\' read failed' %
+            conf.fatal('network configuration \'%s\' read failed' %
                        (net_config))
 
         tags = [
@@ -127,7 +127,7 @@ def configure_net_config(conf, arch_bsp):
             if l.strip().startswith('NET_CFG_'):
                 ls = l.split('=')
                 if len(ls) != 2:
-                    conf.fatal('network configuraiton \'%s\' ' + \
+                    conf.fatal('network configuration \'%s\' ' + \
                               'parse error: %d: %s' % (net_config, lc, l))
                 lhs = ls[0].strip()
                 rhs = ls[1].strip()
