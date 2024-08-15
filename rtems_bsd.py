@@ -42,7 +42,7 @@ def init(ctx):
 
 def options(opt):
     opt.add_option('--net-config',
-                   default='config.inc',
+                   default=None,
                    dest='net_config',
                    help='Network test configuration.')
     opt.add_option('--rtems-libbsd',
@@ -94,7 +94,7 @@ def bsp_configure(conf, arch_bsp, mandatory=True):
                    includes=conf.env.IFLAGS)
 
         conf.env.RTEMS_LIBBSD = 'Yes'
-        conf.env.INCLUDES = conf.env.IFLAGS
+        conf.env.INCLUDES += conf.env.IFLAGS
         conf.env.LIBPATH += [rtems_libbsd_lib_path]
         conf.env.LIB += ['bsd', 'z', 'm']
 
