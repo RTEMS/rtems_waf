@@ -43,7 +43,8 @@ windows = os.name == 'nt' or sys.platform in ['msys', 'cygwin']
 
 
 def options(opt):
-    copts = opt.option_groups['configure options']
+    opt.add_option_group('configure options')
+    copts = opt.get_option_group('configure options')
     copts.add_option('--rtems',
                      default=None,
                      dest='rtems_path',
@@ -264,9 +265,12 @@ def configure(conf, bsp_configure=None):
         cflags = _filter_flags('cflags', flags['CFLAGS'], arch, rtems_path)
         ldflags = _filter_flags('ldflags', flags['LDFLAGS'], arch, rtems_path)
 
+        cflags['cxxflags'] = copy.copy(cflags['cflags'])
+        cflags['asflags'] = copy.copy(cflags['cflags'])
+
         conf.env.CFLAGS = cflags['cflags']
-        conf.env.CXXFLAGS = cflags['cflags']
-        conf.env.ASFLAGS = cflags['cflags']
+        conf.env.CXXFLAGS = cflags['cxxflags']
+        conf.env.ASFLAGS = cflags['asflags']
         conf.env.WFLAGS = cflags['warnings']
         conf.env.RFLAGS = cflags['specs']
         conf.env.MFLAGS = cflags['machines']
