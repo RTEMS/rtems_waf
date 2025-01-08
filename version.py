@@ -113,10 +113,10 @@ def _load_released_version_config(ctx):
     '''Local worker to load a configuration file.'''
     top = _top(ctx)
     for ver in [os.path.join(top, 'VERSION')]:
-        if os.path.exists(os.path.join(ver)):
+        if os.path.exists(ver):
             v = configparser.SafeConfigParser()
             try:
-                v.read(os.path.host(ver))
+                v.read(ver)
             except Exception as e:
                 raise ctx.fatal('invalid version config format: %s: %s' %
                                 (ver, e))
